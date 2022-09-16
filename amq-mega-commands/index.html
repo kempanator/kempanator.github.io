@@ -39,24 +39,25 @@ GAME SETTINGS
 /songs [5-100]      change number of songs
 /dif [low] [high]   change difficulty
 
-IN GAME
+IN GAME/LOBBY
 /autoskip           automatically vote skip at the beginning of each song
 /autosubmit         automatically submit answer on each key press
 /autothrow [text]   automatically send answer at the beginning of each song
 /autocopy [name]    automatically copy a team member's answer
 /autoready          automatically ready up in lobby
 /autostart          automatically start the game when everyone is ready if you are host
-/leave              leave room
-/rejoin             rejoin room
-/spec               change to spectator
-/join               join lobby
-/queue              join/leave queue
-/host [name]        promote host
-/kick [name]        kick player
+/ready              ready up in lobby
 /invite [name]      invite player to game
+/host [name]        promote player to host
+/kick [name]        kick player
 /skip               vote skip on current song
 /pause              pause/unpause game
 /lobby              start return to lobby vote
+/leave              leave room
+/rejoin [seconds]   leave and rejoin the room you are currently in after # of seconds
+/spec               change to spectator
+/join               change from spectator to player in lobby
+/queue              join/leave queue
 /volume [0-100]     change volume
 
 OTHER
@@ -69,6 +70,7 @@ OTHER
 /password           reveal private room password
 /invisible          show invisible friends (this command might be broken)
 /logout             log out
+/version            check the version of this script
 </pre>
 </body>
 </html>
