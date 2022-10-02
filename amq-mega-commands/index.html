@@ -46,7 +46,12 @@ IN GAME/LOBBY
 /autocopy [name]    automatically copy a team member's answer
 /autoready          automatically ready up in lobby
 /autostart          automatically start the game when everyone is ready if you are host
-/ready              ready up in lobby
+/autohost [name]    automatically promote player to host if you are the current host
+/autoinvite [name]  automatically invite a player to your room when they log in (only friends)
+/autoaccept         automatically accept game invites if you aren't in a room (only friends)
+/autostatus [text]  automatically set status on log in (online, away, do not disturb, invisible)
+/ready              ready/unready in lobby
+/answer [text]      submit answer
 /invite [name]      invite player to game
 /host [name]        promote player to host
 /kick [name]        kick player
@@ -59,18 +64,21 @@ IN GAME/LOBBY
 /join               change from spectator to player in lobby
 /queue              join/leave queue
 /volume [0-100]     change volume
+/dropdown           enable/disable anime dropdown
 
 OTHER
 /roll               roll number, player, playerteam, spectator
 /rules              show list of gamemodes and rules
 /info               show list of external utilities
-/pm [name] [text]   private message a player (name is case sensitive)
+/clear              clear chat
+/pm [name] [text]   private message a player
 /profile [name]     show profile window of any player
 /leaderboard        show the leaderboard
 /password           reveal private room password
 /invisible          show invisible friends (this command might be broken)
 /logout             log out
 /version            check the version of this script
+/commands [on|off]  turn this script on or off
 </pre>
 </body>
 </html>
