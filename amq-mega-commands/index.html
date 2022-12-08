@@ -25,60 +25,73 @@
 <pre>
 AMQ Mega Commands by kempanator
 Combines functionality of other scripts into 1 giant script
-IMPORTANT: disable dice roller by thejoseph98 and chat commands by nyamu before installing
+
+IMPORTANT: disable these scripts before installing
+- dice roller by thejoseph98
+- chat commands by nyamu
+- auto ready by nyamu
+- auto answer on keypress by (unknown)
 
 GAME SETTINGS
-/size [2-40]        change room size
-/type [oei]         change song types
-/watched            change selection type to watched
-/random             change selection type to random
-/speed [1-4]        change song speed
-/time [5-60]        change song guess time
-/lives [1-5]        change number of lives
-/team [1-8]         change team size
-/songs [5-100]      change number of songs
-/dif [low] [high]   change difficulty
+/size [2-40]          change room size
+/type [oei]           change song types
+/watched              change selection type to watched
+/random               change selection type to random
+/speed [1-4]          change song speed
+/time [5-60]          change song guess time
+/lives [1-5]          change number of lives
+/team [1-8]           change team size
+/songs [5-100]        change number of songs
+/dif [low] [high]     change difficulty
 
 IN GAME/LOBBY
-/autoskip           automatically vote skip at the beginning of each song
-/autosubmit         automatically submit answer on each key press
-/autothrow [text]   automatically send answer at the beginning of each song
-/autocopy [name]    automatically copy a team member's answer
-/autoready          automatically ready up in lobby
-/autostart          automatically start the game when everyone is ready if you are host
-/autohost [name]    automatically promote player to host if you are the current host
-/autoinvite [name]  automatically invite a player to your room when they log in (only friends)
-/autoaccept         automatically accept game invites if you aren't in a room (only friends)
-/autostatus [text]  automatically set status on log in (online, away, do not disturb, invisible)
-/ready              ready/unready in lobby
-/answer [text]      submit answer
-/invite [name]      invite player to game
-/host [name]        promote player to host
-/kick [name]        kick player
-/skip               vote skip on current song
-/pause              pause/unpause game
-/lobby              start return to lobby vote
-/leave              leave room
-/rejoin [seconds]   leave and rejoin the room you are currently in after # of seconds
-/spec               change to spectator
-/join               change from spectator to player in lobby
-/queue              join/leave queue
-/volume [0-100]     change volume
-/dropdown           enable/disable anime dropdown
+/autoskip             automatically vote skip at the beginning of each song
+/autokey              automatically submit answer on each key press
+/autothrow [text]     automatically send answer at the beginning of each song
+/autocopy [name]      automatically copy a team member's answer
+/automute [seconds]   automatically mute sound during quiz after # of seconds
+/autounmute [seconds] automatically unmute sound during quiz after # of seconds
+/autoready            automatically ready up in lobby
+/autostart            automatically start the game when everyone is ready if you are host
+/autohost [name]      automatically promote player to host if you are the current host
+/autoinvite [name]    automatically invite a player to your room when they log in (only friends)
+/autoaccept           automatically accept game invites if you aren't in a room (only friends)
+/autolobby            automatically vote return to lobby when host starts a vote
+/ready                ready/unready in lobby
+/invite [name]        invite player to game
+/host [name]          promote player to host
+/kick [name]          kick player
+/skip                 vote skip on current song
+/pause                pause/unpause game
+/lobby                start return to lobby vote
+/leave                leave room
+/rejoin [seconds]     leave and rejoin the room you're in after # of seconds
+/spec                 change to spectator
+/join                 change from spectator to player in lobby
+/queue                join/leave queue
+/volume [0-100]       change volume
+/countdown [seconds]  start game after # of seconds
+/dropdown             enable/disable anime dropdown
+/dropdownspec         enable drop down while spectating
 
 OTHER
-/roll               roll number, player, playerteam, spectator
-/rules              show list of gamemodes and rules
-/info               show list of external utilities
-/clear              clear chat
-/pm [name] [text]   private message a player
-/profile [name]     show profile window of any player
-/leaderboard        show the leaderboard
-/password           reveal private room password
-/invisible          show invisible friends (this command might be broken)
-/logout             log out
-/version            check the version of this script
-/commands [on|off]  turn this script on or off
+/roll                 roll number, player, teammate, playerteam, spectator
+/shuffle [list]       shuffle a list of anything (separate with commas)
+/startvote [list]     start a vote with a list of options (separate with commas)
+/stopvote             stop the vote and print results
+/calc [expression]    calculate a math expression
+/rules                show list of gamemodes and rules
+/info                 show list of external utilities
+/clear                clear chat
+/dm [name] [text]     direct message a player
+/profile [name]       show profile window of any player
+/password             reveal private room password
+/invisible            show invisible friends
+/background [url]     change the background
+/logout               log out
+/relog                log out, log in, and auto join the room you were in
+/version              check the version of this script
+/commands [on|off]    turn this script on or off
 </pre>
 </body>
 </html>
