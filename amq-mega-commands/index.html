@@ -23,9 +23,6 @@
 </head>
 <body>
 <pre>
-AMQ Mega Commands by kempanator
-Combines functionality of other scripts into 1 giant script
-
 IMPORTANT: disable these scripts before installing
 - dice roller by thejoseph98
 - chat commands by nyamu
@@ -35,14 +32,19 @@ IMPORTANT: disable these scripts before installing
 GAME SETTINGS
 /size [2-40]          change room size
 /type [oei]           change song types
-/watched              change selection type to watched
 /random               change selection type to random
-/speed [1-4]          change song speed
-/time [5-60]          change song guess time
+/unwatched            change selection type to unwatched
+/watched              change selection type to watched
+/time [1-60]          change song guess time
+/extratime [0-15]     change song guess extra time
+/sample [low] [high]  change start sample point
 /lives [1-5]          change number of lives
 /team [1-8]           change team size
 /songs [5-100]        change number of songs
 /dif [low] [high]     change difficulty
+/vintage [text]       change vintage
+/genre [text]         change genre
+/tag [text]           change tags
 
 IN GAME/LOBBY
 /autoskip             automatically vote skip at the beginning of each song
@@ -73,6 +75,9 @@ IN GAME/LOBBY
 /countdown [seconds]  start game after # of seconds
 /dropdown             enable/disable anime dropdown
 /dropdownspec         enable drop down while spectating
+/speed [number]       change client-side song playback speed (0.0625 - 16)
+/mutereplay           auto mute during the replay phase
+/mutesubmit           auto mute after answer submit
 
 OTHER
 /roll                 roll number, player, teammate, playerteam, spectator
@@ -90,6 +95,8 @@ OTHER
 /background [url]     change the background
 /logout               log out
 /relog                log out, log in, and auto join the room you were in
+/printonline          print friend names in chat when they log in
+/printoffline         print friend names in chat when they log out
 /version              check the version of this script
 /commands [on|off]    turn this script on or off
 </pre>
