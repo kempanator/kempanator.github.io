@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ADB2</title>
+  <!-- Vendor CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" />
+  <!-- App CSS -->
+  <link href="style.css" rel="stylesheet" />
+</head>
+
+<body>
+  <!-- Header -->
+  <nav class="navbar navbar-expand-lg border-bottom sticky-top bg-body-tertiary py-0">
+    <div class="container-fluid d-flex align-items-center justify-content-between py-1">
+      <a class="navbar-brand" href="#">ADB2</a>
+      <div class="d-flex align-items-center gap-2">
+        <button id="btnPrevSong" class="btn btn-sm btn-outline-secondary" title="Previous"><i
+            class="fa-solid fa-backward-step"></i></button>
+        <button id="btnNextSong" class="btn btn-sm btn-outline-secondary" title="Next"><i
+            class="fa-solid fa-forward-step"></i></button>
+        <button id="btnSettings" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+          data-bs-target="#settingsModal" aria-label="Settings">
+          <i class="fa-solid fa-cog"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Toolbar -->
+  <div class="container mt-3">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center w-100 gap-2">
+        <!-- Simple Search Mode -->
+        <div id="simpleSearchMode"
+          class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center w-100 gap-2">
+          <select id="searchScope" class="form-select form-select-sm w-auto">
+            <option value="All" selected>All</option>
+            <option value="Anime">Anime</option>
+            <option value="Artist">Artist</option>
+            <option value="Song">Song</option>
+            <option value="Composer">Composer</option>
+            <option value="Season">Season</option>
+            <option value="ANN">ANN ID</option>
+            <option value="MAL">MAL ID</option>
+          </select>
+          <input id="searchQuery" type="text" class="form-control form-control-sm flex-grow-1"
+            placeholder="Search anime, artist, song, composer" />
+        </div>
+
+        <!-- Advanced Search Mode -->
+        <div id="advancedSearchMode"
+          class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center w-100 gap-2 d-none">
+          <input id="searchAnime" type="text" class="form-control form-control-sm" placeholder="Anime title" />
+          <input id="searchArtist" type="text" class="form-control form-control-sm" placeholder="Artist name" />
+          <input id="searchSong" type="text" class="form-control form-control-sm" placeholder="Song name" />
+          <input id="searchComposer" type="text" class="form-control form-control-sm" placeholder="Composer name" />
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-nowrap">
+        <button id="btnSearch" class="btn btn-sm btn-primary" title="Search">
+          <i class="fa-solid fa-magnifying-glass me-1"></i><span class="btn-label">Search</span>
+        </button>
+        <button id="btnFilters" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse"
+          data-bs-target="#advancedPane" aria-expanded="false" aria-controls="advancedPane" title="Song Filters">
+          <i class="fa-solid fa-sliders me-1"></i><span class="btn-label">Filters</span>
+        </button>
+        <div id="resultMode" class="btn-group btn-group-sm" role="group" aria-label="Result mode"
+          style="flex:0 0 auto;">
+          <button type="button" class="btn btn-outline-secondary active" data-mode="new" aria-pressed="true"
+            title="Create new table every search">New</button>
+          <button type="button" class="btn btn-outline-secondary" data-mode="append" aria-pressed="false"
+            title="Add results to current table">Add</button>
+        </div>
+        <button id="btnSearchMode" class="btn btn-sm btn-outline-secondary" title="Toggle search mode">
+          <i class="fa-solid fa-wrench me-1"></i><span class="btn-label">Simple</span>
+        </button>
+        <button id="btnShuffle" class="btn btn-sm btn-outline-secondary" title="Shuffle table results"><i
+            class="fa-solid fa-shuffle me-1"></i><span class="btn-label">Shuffle</span>
+        </button>
+        <button id="btnDownloadJson" class="btn btn-sm btn-outline-secondary d-none d-md-inline-block">
+          <i class="fa-solid fa-file-arrow-down me-1"></i>Download JSON
+        </button>
+        <button id="btnUploadJson" class="btn btn-sm btn-outline-secondary d-none d-md-inline-block">
+          <i class="fa-solid fa-file-arrow-up me-1"></i>Upload JSON
+        </button>
+      </div>
+      <input id="fileJson" type="file" accept="application/json,.json" class="d-none" />
+    </div>
+  </div>
+
+  <div class="container mt-3">
+    <div id="alertHost"></div>
+
+    <!-- Advanced filters pane -->
+    <div class="collapse" id="advancedPane">
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-3">
+            <!-- Line 1: Song Types, Partial match, Match case, Arrangement -->
+            <div class="col-6 col-md-3">
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="chkOP" checked />
+                  <label class="form-check-label" for="chkOP">OP</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="chkED" checked />
+                  <label class="form-check-label" for="chkED">ED</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="chkIN" checked />
+                  <label class="form-check-label" for="chkIN">IN</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkPartial" checked />
+                <label class="form-check-label" for="chkPartial">
+                  Partial match
+                  <i class="fa-solid fa-circle-info text-muted ms-1" data-bs-toggle="popover" data-bs-trigger="hover"
+                    data-bs-placement="top"
+                    data-bs-content="When enabled, search terms will match partial words. When disabled, only exact word matches will be found."></i>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkMatchCase" />
+                <label class="form-check-label" for="chkMatchCase">
+                  Match case
+                  <i class="fa-solid fa-circle-info text-muted ms-1" data-bs-toggle="popover" data-bs-trigger="hover"
+                    data-bs-placement="top"
+                    data-bs-content="When enabled, search is case-sensitive. When disabled, search ignores letter case."></i>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkArrangement" checked />
+                <label class="form-check-label" for="chkArrangement">
+                  Arrangement
+                  <i class="fa-solid fa-circle-info text-muted ms-1" data-bs-toggle="popover" data-bs-trigger="hover"
+                    data-bs-placement="top"
+                    data-bs-content="When searching by composer, also include songs where they are listed as arranger."></i>
+                </label>
+              </div>
+            </div>
+
+            <!-- Line 2: Max other people, Min group members, Filter type, Ignore duplicates -->
+            <div class="col-6 col-md-3">
+              <label class="form-label" for="inpMaxOther">
+                Max other people
+                <i class="fa-solid fa-circle-info text-muted ms-1" data-bs-toggle="popover" data-bs-trigger="hover"
+                  data-bs-placement="top"
+                  data-bs-content="Maximum number of additional artists allowed in a group. Set to 0 for solo artists only, or higher to include groups with multiple members."></i>
+              </label>
+              <input id="inpMaxOther" type="number" class="form-control" min="0" value="99" />
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label" for="inpGroupMin">
+                Min group members
+                <i class="fa-solid fa-circle-info text-muted ms-1" data-bs-toggle="popover" data-bs-trigger="hover"
+                  data-bs-placement="top"
+                  data-bs-content="Minimum number of members required for a group. Set to 0 to include solo artists, or higher to only show groups with multiple members."></i>
+              </label>
+              <input id="inpGroupMin" type="number" class="form-control" min="0" value="0" />
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label" for="selFilterType">
+                Filter type
+                <i class="fa-solid fa-circle-info text-muted ms-1" data-bs-toggle="popover" data-bs-trigger="hover"
+                  data-bs-placement="top"
+                  data-bs-content="Union: Show results matching ANY of the search fields. Intersection: Show results matching ALL of the search fields. Only applies to Advanced Search mode."></i>
+              </label>
+              <select id="selFilterType" class="form-select" disabled>
+                <option value="union" selected>Union</option>
+                <option value="intersection">Intersection</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="form-check mt-4">
+                <input class="form-check-input" type="checkbox" id="chkIgnoreDup" />
+                <label class="form-check-label" for="chkIgnoreDup">Ignore duplicates</label>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <hr class="my-2" />
+            </div>
+            <div class="col-4 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkNormal" checked />
+                <label class="form-check-label" for="chkNormal">Normal broadcasts</label>
+              </div>
+            </div>
+            <div class="col-4 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkDub" checked />
+                <label class="form-check-label" for="chkDub">Dubs</label>
+              </div>
+            </div>
+            <div class="col-4 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkRebroadcast" checked />
+                <label class="form-check-label" for="chkRebroadcast">Rebroadcasts</label>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <hr class="my-2" />
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkStandard" checked />
+                <label class="form-check-label" for="chkStandard">Standard</label>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkCharacter" checked />
+                <label class="form-check-label" for="chkCharacter">Character</label>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkChanting" checked />
+                <label class="form-check-label" for="chkChanting">Chanting</label>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkInstrumental" checked />
+                <label class="form-check-label" for="chkInstrumental">Instrumental</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="container-fluid mt-2 d-flex justify-content-end small text-muted px-2 px-md-3"><span>Results: <span
+        id="resultsCount">0</span></span></div>
+  <div class="container-fluid mt-3 px-0 px-md-3">
+
+
+    <div id="resultsCards" class="d-block d-md-none"></div>
+    <div class="table-responsive d-none d-md-block">
+      <div class="d-flex justify-content-end mb-2 d-md-none">
+        <button id="btnToggleColumns" class="btn btn-sm btn-outline-secondary">Show all columns</button>
+      </div>
+      <table id="resultsTable" class="table table-hover table-sm align-middle w-100 mobile-compact">
+        <colgroup>
+          <col class="col-plus" style="width:40px" />
+          <col class="col-rownum" style="width:35px" />
+          <col class="col-ann" style="width:80px" />
+          <col class="col-anime" style="width:18%" />
+          <col class="col-type" style="width:55px" />
+          <col class="col-song" style="width:18%" />
+          <col class="col-artist" style="width:15%" />
+          <col class="col-vintage" style="width:110px" />
+          <col class="col-diff" style="width:50px" />
+          <col class="col-category" style="width:80px" />
+          <col class="col-broadcast" style="width:80px" />
+          <col class="col-length" style="width:60px" />
+          <col class="col-composer" style="width:12%" />
+          <col class="col-arranger" style="width:12%" />
+          <col class="col-annSongId" style="width:80px" />
+          <col class="col-amqSongId" style="width:80px" />
+          <col class="col-anilistId" style="width:80px" />
+          <col class="col-malId" style="width:80px" />
+          <col class="col-kitsuId" style="width:80px" />
+          <col class="col-anidbId" style="width:80px" />
+          <col class="col-links" style="width:125px" />
+          <col class="col-action" style="width:100px" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col" class="no-sort nw">+</th>
+            <th scope="col" class="nw" data-col="rownum">#</th>
+            <th scope="col" class="nw" data-col="annid">ANN ID</th>
+            <th scope="col" data-col="anime">Anime</th>
+            <th scope="col" class="nw" data-col="type">Type</th>
+            <th scope="col" data-col="song">Song</th>
+            <th scope="col" data-col="artist">Artist</th>
+            <th scope="col" class="nw" data-col="vintage">Vintage</th>
+            <th scope="col" class="nw" data-col="difficulty">Dif</th>
+            <th scope="col" class="nw" data-col="category">Category</th>
+            <th scope="col" class="nw" data-col="broadcast">Broadcast</th>
+            <th scope="col" class="nw" data-col="length">Length</th>
+            <th scope="col" data-col="composer">Composer</th>
+            <th scope="col" data-col="arranger">Arranger</th>
+            <th scope="col" class="nw" data-col="annSongId">ANN Song ID</th>
+            <th scope="col" class="nw" data-col="amqSongId">AMQ Song ID</th>
+            <th scope="col" class="nw" data-col="anilistId">AniList ID</th>
+            <th scope="col" class="nw" data-col="malId">MAL ID</th>
+            <th scope="col" class="nw" data-col="kitsuId">Kitsu ID</th>
+            <th scope="col" class="nw" data-col="anidbId">AniDB ID</th>
+            <th scope="col" class="no-sort nw">Links</th>
+            <th scope="col" class="no-sort nw">Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sticky player (hidden until first play) -->
+  <div class="player-wrap bg-body border-top" id="playerWrap">
+    <div class="container-fluid px-0">
+      <audio id="player" controls class="w-100"></audio>
+    </div>
+  </div>
+
+  <!-- Song Info Modal -->
+  <div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Song Details</h5>
+          <div class="ms-auto">
+            <select id="infoViewMode" class="form-select form-select-sm">
+              <option value="formatted" selected>Formatted</option>
+              <option value="raw">Raw JSON</option>
+            </select>
+          </div>
+          <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="infoFormatted" class="d-none"></div>
+          <pre id="infoJson" class="mb-0 d-none"></pre>
+        </div>
+        <div class="modal-footer d-flex justify-content-between align-items-center">
+          <div class="d-flex gap-2">
+            <button id="btnInfoPrev" class="btn btn-outline-secondary"><i
+                class="fa-solid fa-backward-step me-1"></i>Prev</button>
+            <button id="btnInfoNext" class="btn btn-outline-secondary">Next<i
+                class="fa-solid fa-forward-step ms-1"></i></button>
+          </div>
+          <div class="d-flex gap-2">
+            <button id="btnInfoPlay" class="btn btn-primary"><i class="fa-solid fa-play me-1"></i>Play</button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (full controls) -->
+  <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 20px;">
+              <div>Version: <strong>1.0</strong></div>
+              <div>By: <strong>kempanator</strong></div>
+              <div><a href="https://github.com/kempanator" target="_blank" rel="noreferrer">GitHub</a></div>
+            </div>
+          </div>
+          <hr />
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <div class="form-label">Theme</div>
+              <div class="segmented-switch" id="settingTheme">
+                <button type="button" class="segment active" data-value="dark">Dark</button>
+                <button type="button" class="segment" data-value="light">Light</button>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-label">Language (anime titles)</div>
+              <div class="segmented-switch" id="settingLanguage">
+                <button type="button" class="segment active" data-value="english">English</button>
+                <button type="button" class="segment" data-value="romaji">Romaji</button>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-label">Radio mode</div>
+              <div class="segmented-switch" id="settingRadio">
+                <button type="button" class="segment active" data-value="none">None</button>
+                <button type="button" class="segment" data-value="repeat">Repeat</button>
+                <button type="button" class="segment" data-value="loopAll">Loop all</button>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-label">Catbox host</div>
+              <div class="segmented-switch" id="settingCatbox">
+                <button type="button" class="segment" data-value="eudist">eudist</button>
+                <button type="button" class="segment active" data-value="nawdist">nawdist</button>
+                <button type="button" class="segment" data-value="naedist">naedist</button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4">
+            <h6>Hotkeys</h6>
+          </div>
+          <div class="row g-2">
+            <div class="col-6 col-md-3">
+              <label for="hkDownloadJson" class="form-label">Download JSON</label>
+              <input id="hkDownloadJson" class="form-control" placeholder="Press keys" />
+            </div>
+            <div class="col-6 col-md-3">
+              <label for="hkPlayPause" class="form-label">Play/Pause</label>
+              <input id="hkPlayPause" class="form-control" placeholder="Press keys" />
+            </div>
+            <div class="col-6 col-md-3">
+              <label for="hkPrev" class="form-label">Play Previous</label>
+              <input id="hkPrev" class="form-control" placeholder="Press keys" />
+            </div>
+            <div class="col-6 col-md-3">
+              <label for="hkNext" class="form-label">Play Next</label>
+              <input id="hkNext" class="form-control" placeholder="Press keys" />
+            </div>
+          </div>
+          <div class="mt-4">
+            <h6>Table Columns</h6>
+            <div class="row g-2">
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colPlus" checked />
+                  <label class="form-check-label" for="colPlus">Details (+)</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colRownum" checked />
+                  <label class="form-check-label" for="colRownum">Row Number (#)</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colAnnid" checked />
+                  <label class="form-check-label" for="colAnnid">ANN ID</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colAnime" checked />
+                  <label class="form-check-label" for="colAnime">Anime</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colType" checked />
+                  <label class="form-check-label" for="colType">Type</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colSong" checked />
+                  <label class="form-check-label" for="colSong">Song</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colArtist" checked />
+                  <label class="form-check-label" for="colArtist">Artist</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colVintage" checked />
+                  <label class="form-check-label" for="colVintage">Vintage</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colDifficulty" checked />
+                  <label class="form-check-label" for="colDifficulty">Difficulty</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colCategory" />
+                  <label class="form-check-label" for="colCategory">Category</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colBroadcast" />
+                  <label class="form-check-label" for="colBroadcast">Broadcast</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colLength" />
+                  <label class="form-check-label" for="colLength">Length</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colComposer" />
+                  <label class="form-check-label" for="colComposer">Composer</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colArranger" />
+                  <label class="form-check-label" for="colArranger">Arranger</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colAnnSongId" />
+                  <label class="form-check-label" for="colAnnSongId">ANN Song ID</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colAmqSongId" />
+                  <label class="form-check-label" for="colAmqSongId">AMQ Song ID</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colAnilistId" />
+                  <label class="form-check-label" for="colAnilistId">AniList ID</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colMalId" />
+                  <label class="form-check-label" for="colMalId">MAL ID</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colKitsuId" />
+                  <label class="form-check-label" for="colKitsuId">Kitsu ID</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colAnidbId" />
+                  <label class="form-check-label" for="colAnidbId">AniDB ID</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colLinks" checked />
+                  <label class="form-check-label" for="colLinks">Links</label>
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="colAction" checked />
+                  <label class="form-check-label" for="colAction">Action</label>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3 text-center">
+              <button id="btnResetColumns" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-rotate-left me-1"></i>Reset Columns
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendor JS -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <!-- App JS -->
+  <script src="script.js"></script>
+</body>
+
+</html>
