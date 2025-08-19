@@ -506,7 +506,7 @@ function handleGlobalHotkeys(e) {
 // ==========
 function updateScopePlaceholder() {
   const s = $("#searchScope").val();
-  const map = { Anime: "Search anime", Artist: "Search artist", Song: "Search song", Composer: "Search composer", Season: "e.g. Winter 2024", ANN: "Enter ANN ID(s), comma-separated", MAL: "Enter MAL ID(s), comma-separated" };
+  const map = { Anime: "Search anime", Artist: "Search artist", Song: "Search song", Composer: "Search composer", Season: "e.g. Winter 2024", ANN: "Enter ANN ID(s), comma-separated", ANN_SONG: "Enter ANN Song ID(s), comma-separated", MAL: "Enter MAL ID(s), comma-separated" };
   $("#searchQuery").attr("placeholder", map[s] || "Search anime, artist, song, composer");
 }
 
@@ -564,14 +564,13 @@ function onSearchSubmit() {
   if (scope === "Season") {
     const seasonStr = parseSeason(q);
     if (!seasonStr) { return showAlert("Invalid season. Use e.g. 'Spring 2024'.", "warning"); }
+    const body = buildSeasonBody(seasonStr, t);
     AppState.meta.lastEndpoint = "/api/filter_season";
-    AppState.meta.lastSeasonQuery = seasonStr;
-    fetch(`${API_BASE}/api/filter_season?season=${encodeURIComponent(seasonStr)}`, { signal: AppState.aborter.signal })
-      .then(okJson)
+    AppState.meta.lastRequestBody = body;
+    postJson(`${API_BASE}/api/filter_season`, body)
       .then(data => {
         AppState.results.raw = data;
-        const filteredData = seasonClientFilter(data, t);
-        const newRows = applyClientSideFiltering(filteredData, t);
+        const newRows = applyClientSideFiltering(data.slice(), t);
         if (isAppend) {
           AppState.results.visible = AppState.results.visible.concat(newRows);
           AppState.results.manualOrderActive = true;
@@ -593,6 +592,30 @@ function onSearchSubmit() {
     AppState.meta.lastEndpoint = "/api/annIdList_request";
     AppState.meta.lastRequestBody = body;
     postJson(`${API_BASE}/api/annIdList_request`, body)
+      .then(data => {
+        AppState.results.raw = data;
+        const newRows = applyClientSideFiltering(data.slice(), t);
+        if (isAppend) {
+          AppState.results.visible = AppState.results.visible.concat(newRows);
+          AppState.results.manualOrderActive = true;
+          AppState.results.sort = { column: null, dir: null };
+        } else {
+          AppState.results.visible = newRows;
+        }
+        renderTable();
+      })
+      .catch(onFetchError);
+    return;
+  }
+
+  if (scope === "ANN_SONG") {
+    const ids = q.split(",").map(s => s.trim()).filter(Boolean);
+    if (ids.some(id => !/^\d+$/.test(id))) return showAlert("ANN Song IDs must be numeric (comma-separated).", "warning");
+    if (ids.length > 500) return showAlert("Too many ANN Song IDs (max 500).", "warning");
+    const body = buildAnnSongIdsBody(ids.map(Number), t);
+    AppState.meta.lastEndpoint = "/api/ann_song_ids_request";
+    AppState.meta.lastRequestBody = body;
+    postJson(`${API_BASE}/api/ann_song_ids_request`, body)
       .then(data => {
         AppState.results.raw = data;
         const newRows = applyClientSideFiltering(data.slice(), t);
@@ -806,49 +829,47 @@ function buildMalBody(ids, t) {
   };
 }
 
+function buildSeasonBody(season, t) {
+  return {
+    season: season,
+    ignore_duplicate: t.ignore_duplicate,
+    opening_filter: t.opening_filter,
+    ending_filter: t.ending_filter,
+    insert_filter: t.insert_filter,
+    normal_broadcast: t.normal_broadcast,
+    dub: t.dub,
+    rebroadcast: t.rebroadcast,
+    standard: t.standard,
+    character: t.character,
+    chanting: t.chanting,
+    instrumental: t.instrumental
+  };
+}
+
+function buildAnnSongIdsBody(annSongIds, t) {
+  return {
+    annSongIds: annSongIds,
+    ignore_duplicate: t.ignore_duplicate,
+    opening_filter: t.opening_filter,
+    ending_filter: t.ending_filter,
+    insert_filter: t.insert_filter,
+    normal_broadcast: t.normal_broadcast,
+    dub: t.dub,
+    rebroadcast: t.rebroadcast,
+    standard: t.standard,
+    character: t.character,
+    chanting: t.chanting,
+    instrumental: t.instrumental
+  };
+}
+
 function parseSeason(q) {
   const m = /^(Winter|Spring|Summer|Fall)\s+(\d{4})$/i.exec(q.trim());
   if (!m) return null;
   return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase() + " " + m[2];
 }
 
-function seasonClientFilter(rows, t) {
-  if (!Array.isArray(rows)) return [];
-  const allowedTypes = new Set([
-    ...(t.opening_filter ? ["OP"] : []),
-    ...(t.ending_filter ? ["ED"] : []),
-    ...(t.insert_filter ? ["IN"] : [])
-  ]);
-  const allowedBroadcasts = new Set([
-    ...(t.normal_broadcast ? ["Normal"] : []),
-    ...(t.dub ? ["Dub"] : []),
-    ...(t.rebroadcast ? ["Rebroadcast"] : [])
-  ]);
-  const allowedCats = new Set([
-    ...(t.standard ? ["Standard"] : []),
-    ...(t.character ? ["Character"] : []),
-    ...(t.chanting ? ["Chanting"] : []),
-    ...(t.instrumental ? ["Instrumental"] : [])
-  ]);
-  const normType = (v) => {
-    const s = String(v || "").toUpperCase();
-    if (s.startsWith("OPENING") || s.startsWith("OP")) return "OP";
-    if (s.startsWith("ENDING") || s.startsWith("ED")) return "ED";
-    if (s.startsWith("INSERT") || s.startsWith("IN")) return "IN";
-    return s;
-  };
-  const getBroadcast = (r) => (r.isDub === true || r.dub === true) ? "Dub" : ((r.isRebroadcast === true || r.rebroadcast === true) ? "Rebroadcast" : "Normal");
-  const getCategory = (r) => r.songCategory || r.category || "No Category";
 
-  return rows.filter(r => {
-    const songType = normType(r.songType || r.type);
-    const okType = allowedTypes.size ? allowedTypes.has(songType) : true;
-    const okBroadcast = allowedBroadcasts.size ? allowedBroadcasts.has(getBroadcast(r)) : true;
-    const cat = getCategory(r);
-    const okCat = (cat === "No Category") || allowedCats.has(cat);
-    return okType && okBroadcast && okCat;
-  });
-}
 
 function applyClientSideFiltering(rows, t) {
   if (!Array.isArray(rows)) return rows;
