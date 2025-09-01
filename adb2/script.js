@@ -567,7 +567,7 @@ function onSearchSubmit() {
     const body = buildSeasonBody(seasonStr, t);
     AppState.meta.lastEndpoint = "/api/season_request";
     AppState.meta.lastRequestBody = body;
-    postJson(`${API_BASE}/api/filter_season`, body)
+    postJson(`${API_BASE}/api/season_request`, body)
       .then(data => {
         AppState.results.raw = data;
         const newRows = applyClientSideFiltering(data.slice(), t);
@@ -591,7 +591,7 @@ function onSearchSubmit() {
     const body = buildAnnBody(ids.map(Number), t);
     AppState.meta.lastEndpoint = "/api/ann_ids_request";
     AppState.meta.lastRequestBody = body;
-    postJson(`${API_BASE}/api/annIdList_request`, body)
+    postJson(`${API_BASE}/api/ann_ids_request`, body)
       .then(data => {
         AppState.results.raw = data;
         const newRows = applyClientSideFiltering(data.slice(), t);
@@ -639,7 +639,7 @@ function onSearchSubmit() {
     const body = buildMalBody(ids.map(Number), t);
     AppState.meta.lastEndpoint = "/api/mal_ids_request";
     AppState.meta.lastRequestBody = body;
-    postJson(`${API_BASE}/api/malIDs_request`, body)
+    postJson(`${API_BASE}/api/mal_ids_request`, body)
       .then(data => {
         AppState.results.raw = data;
         const newRows = applyClientSideFiltering(data.slice(), t);
