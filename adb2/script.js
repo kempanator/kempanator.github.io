@@ -848,7 +848,7 @@ function buildSeasonBody(season, t) {
 
 function buildAnnSongIdsBody(ids, t) {
   return {
-    ann_iong_ids: ids,
+    ann_song_ids: ids,
     ignore_duplicate: t.ignore_duplicate,
     opening_filter: t.opening_filter,
     ending_filter: t.ending_filter,
