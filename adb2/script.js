@@ -565,7 +565,7 @@ function onSearchSubmit() {
     const seasonStr = parseSeason(q);
     if (!seasonStr) { return showAlert("Invalid season. Use e.g. 'Spring 2024'.", "warning"); }
     const body = buildSeasonBody(seasonStr, t);
-    AppState.meta.lastEndpoint = "/api/filter_season";
+    AppState.meta.lastEndpoint = "/api/season_request";
     AppState.meta.lastRequestBody = body;
     postJson(`${API_BASE}/api/filter_season`, body)
       .then(data => {
@@ -589,7 +589,7 @@ function onSearchSubmit() {
     if (ids.some(id => !/^\d+$/.test(id))) return showAlert("ANN IDs must be numeric (comma-separated).", "warning");
     if (ids.length > 500) return showAlert("Too many ANN IDs (max 500).", "warning");
     const body = buildAnnBody(ids.map(Number), t);
-    AppState.meta.lastEndpoint = "/api/annIdList_request";
+    AppState.meta.lastEndpoint = "/api/ann_ids_request";
     AppState.meta.lastRequestBody = body;
     postJson(`${API_BASE}/api/annIdList_request`, body)
       .then(data => {
@@ -637,7 +637,7 @@ function onSearchSubmit() {
     if (ids.some(id => !/^\d+$/.test(id))) return showAlert("MAL IDs must be numeric (comma-separated).", "warning");
     if (ids.length > 500) return showAlert("Too many MAL IDs (max 500).", "warning");
     const body = buildMalBody(ids.map(Number), t);
-    AppState.meta.lastEndpoint = "/api/malIDs_request";
+    AppState.meta.lastEndpoint = "/api/mal_ids_request";
     AppState.meta.lastRequestBody = body;
     postJson(`${API_BASE}/api/malIDs_request`, body)
       .then(data => {
@@ -796,9 +796,9 @@ function buildAdvancedSearchBody(anime, artist, song, composer, t) {
   return result;
 }
 
-function buildAnnBody(annIds, t) {
+function buildAnnBody(ids, t) {
   return {
-    annIds,
+    ann_ids: ids,
     ignore_duplicate: t.ignore_duplicate,
     opening_filter: t.opening_filter,
     ending_filter: t.ending_filter,
@@ -814,7 +814,7 @@ function buildAnnBody(annIds, t) {
 }
 function buildMalBody(ids, t) {
   return {
-    malIds: ids,
+    mal_ids: ids,
     ignore_duplicate: t.ignore_duplicate,
     opening_filter: t.opening_filter,
     ending_filter: t.ending_filter,
@@ -846,9 +846,9 @@ function buildSeasonBody(season, t) {
   };
 }
 
-function buildAnnSongIdsBody(annSongIds, t) {
+function buildAnnSongIdsBody(ids, t) {
   return {
-    annSongIds: annSongIds,
+    ann_iong_ids: ids,
     ignore_duplicate: t.ignore_duplicate,
     opening_filter: t.opening_filter,
     ending_filter: t.ending_filter,
