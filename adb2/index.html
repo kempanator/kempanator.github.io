@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ADB2</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
   <!-- Vendor CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" />
@@ -18,12 +19,16 @@
     <div class="container-fluid d-flex align-items-center justify-content-between py-1">
       <a class="navbar-brand" href="#">ADB2</a>
       <div class="d-flex align-items-center gap-2">
-        <button id="btnPrevSong" class="btn btn-sm btn-outline-secondary" title="Previous"><i
-            class="fa-solid fa-backward-step"></i></button>
-        <button id="btnNextSong" class="btn btn-sm btn-outline-secondary" title="Next"><i
-            class="fa-solid fa-forward-step"></i></button>
-        <button id="btnSettings" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
-          data-bs-target="#settingsModal" aria-label="Settings">
+        <button id="btnPrevSong" class="btn btn-sm btn-outline-secondary navbar-btn-square" title="Previous"><i
+          class="fa-solid fa-backward-step"></i></button>
+        <button id="btnNextSong" class="btn btn-sm btn-outline-secondary navbar-btn-square" title="Next"><i
+          class="fa-solid fa-forward-step"></i></button>
+        <button id="btnPlaylists" class="btn btn-sm btn-outline-secondary navbar-btn-square" data-bs-toggle="modal"
+          data-bs-target="#playlistsModal" aria-label="Playlists" title="Playlists">
+          <i class="fa-solid fa-list"></i>
+        </button>
+        <button id="btnSettings" class="btn btn-sm btn-outline-secondary navbar-btn-square" data-bs-toggle="modal"
+          data-bs-target="#settingsModal" aria-label="Settings" title="Settings">
           <i class="fa-solid fa-cog"></i>
         </button>
       </div>
@@ -47,6 +52,7 @@
             <option value="ANN">ANN ID</option>
             <option value="MAL">MAL ID</option>
             <option value="ANN_SONG">ANN Song ID</option>
+            <option value="AMQ_SONG">AMQ Song ID</option>
           </select>
           <input id="searchQuery" type="text" class="form-control form-control-sm flex-grow-1"
             placeholder="Search anime, artist, song, composer" />
@@ -69,25 +75,35 @@
           data-bs-target="#advancedPane" aria-expanded="false" aria-controls="advancedPane" title="Song Filters">
           <i class="fa-solid fa-sliders me-1"></i><span class="btn-label">Filters</span>
         </button>
-        <div id="resultMode" class="btn-group btn-group-sm" role="group" aria-label="Result mode"
-          style="flex:0 0 auto;">
-          <button type="button" class="btn btn-outline-secondary active" data-mode="new" aria-pressed="true"
-            title="Create new table every search">New</button>
-          <button type="button" class="btn btn-outline-secondary" data-mode="append" aria-pressed="false"
-            title="Add results to current table">Add</button>
-        </div>
+        <button id="btnTable" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse"
+          data-bs-target="#tablePane" aria-expanded="false" aria-controls="tablePane" title="Table operations">
+          <i class="fa-solid fa-table me-1"></i><span class="btn-label">Table</span>
+        </button>
         <button id="btnSearchMode" class="btn btn-sm btn-outline-secondary" title="Toggle search mode">
           <i class="fa-solid fa-wrench me-1"></i><span class="btn-label">Simple</span>
         </button>
-        <button id="btnShuffle" class="btn btn-sm btn-outline-secondary" title="Shuffle table results"><i
-            class="fa-solid fa-shuffle me-1"></i><span class="btn-label">Shuffle</span>
-        </button>
-        <button id="btnDownloadJson" class="btn btn-sm btn-outline-secondary d-none d-md-inline-block">
-          <i class="fa-solid fa-file-arrow-down me-1"></i>Download JSON
-        </button>
-        <button id="btnUploadJson" class="btn btn-sm btn-outline-secondary d-none d-md-inline-block">
-          <i class="fa-solid fa-file-arrow-up me-1"></i>Upload JSON
-        </button>
+        <div class="dropdown">
+          <button id="btnData" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
+            aria-expanded="false" title="Data operations">
+            <i class="fa-solid fa-database me-1"></i><span class="btn-label">Data</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><button id="btnStats" class="dropdown-item" type="button" data-bs-toggle="modal"
+                data-bs-target="#statsModal"><i class="fa-solid fa-chart-bar me-2"></i>Statistics</button></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><button id="btnExportCSV" class="dropdown-item" type="button"><i
+                  class="fa-solid fa-file-csv me-2"></i>Export as CSV</button></li>
+            <li><button id="btnExportJSON" class="dropdown-item" type="button"><i
+                  class="fa-solid fa-file-code me-2"></i>Export as JSON</button></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><button id="btnImportJSON" class="dropdown-item" type="button"><i
+                  class="fa-solid fa-file-import me-2"></i>Import JSON</button></li>
+          </ul>
+        </div>
       </div>
       <input id="fileJson" type="file" accept="application/json,.json" class="d-none" />
     </div>
@@ -179,8 +195,8 @@
                   data-bs-content="Union: Show results matching ANY of the search fields. Intersection: Show results matching ALL of the search fields. Only applies to Advanced Search mode."></i>
               </label>
               <select id="selFilterType" class="form-select" disabled>
-                <option value="union" selected>Union</option>
-                <option value="intersection">Intersection</option>
+                <option value="union">Union (OR)</option>
+                <option value="intersection" selected>Intersection (AND)</option>
               </select>
             </div>
             <div class="col-6 col-md-3">
@@ -191,7 +207,7 @@
             </div>
 
             <div class="col-12">
-              <hr class="my-2" />
+              <hr class="my-0" />
             </div>
             <div class="col-4 col-md-3">
               <div class="form-check">
@@ -213,7 +229,7 @@
             </div>
 
             <div class="col-12">
-              <hr class="my-2" />
+              <hr class="my-0" />
             </div>
             <div class="col-6 col-md-3">
               <div class="form-check">
@@ -244,6 +260,40 @@
       </div>
     </div>
   </div>
+
+  <!-- Table operations pane -->
+  <div class="collapse container" id="tablePane">
+    <div class="card">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div class="fw-semibold mb-2">Result Mode</div>
+            <div id="resultMode" class="btn-group btn-group-sm" role="group" aria-label="Result mode">
+              <button type="button" class="btn btn-outline-secondary active" data-mode="new" aria-pressed="true"
+                title="Create new table every search">New Table</button>
+              <button type="button" class="btn btn-outline-secondary" data-mode="append" aria-pressed="false"
+                title="Add results to current table">Append</button>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="fw-semibold mb-2">Table Operations</div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button id="btnShuffle" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-shuffle me-1"></i>Shuffle Results
+              </button>
+              <button id="btnReverse" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-arrows-up-down me-1"></i>Reverse Order
+              </button>
+              <button id="btnClearTable" class="btn btn-sm btn-outline-danger">
+                <i class="fa-solid fa-trash me-1"></i>Clear Table
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="container-fluid mt-2 d-flex justify-content-end small text-muted px-2 px-md-3"><span>Results: <span
         id="resultsCount">0</span></span></div>
   <div class="container-fluid mt-3 px-0 px-md-3">
@@ -251,62 +301,18 @@
 
     <div id="resultsCards" class="d-block d-md-none"></div>
     <div class="table-responsive d-none d-md-block">
-      <div class="d-flex justify-content-end mb-2 d-md-none">
-        <button id="btnToggleColumns" class="btn btn-sm btn-outline-secondary">Show all columns</button>
-      </div>
       <table id="resultsTable" class="table table-hover table-sm align-middle w-100 mobile-compact">
-        <colgroup>
-          <col class="col-plus" style="width:40px" />
-          <col class="col-rownum" style="width:35px" />
-          <col class="col-ann" style="width:80px" />
-          <col class="col-anime" style="width:18%" />
-          <col class="col-type" style="width:55px" />
-          <col class="col-song" style="width:18%" />
-          <col class="col-artist" style="width:15%" />
-          <col class="col-vintage" style="width:110px" />
-          <col class="col-diff" style="width:50px" />
-          <col class="col-category" style="width:80px" />
-          <col class="col-broadcast" style="width:80px" />
-          <col class="col-length" style="width:60px" />
-          <col class="col-composer" style="width:12%" />
-          <col class="col-arranger" style="width:12%" />
-          <col class="col-annSongId" style="width:80px" />
-          <col class="col-amqSongId" style="width:80px" />
-          <col class="col-anilistId" style="width:80px" />
-          <col class="col-malId" style="width:80px" />
-          <col class="col-kitsuId" style="width:80px" />
-          <col class="col-anidbId" style="width:80px" />
-          <col class="col-links" style="width:125px" />
-          <col class="col-action" style="width:100px" />
-        </colgroup>
-        <thead>
-          <tr>
-            <th scope="col" class="no-sort nw">+</th>
-            <th scope="col" class="nw" data-col="rownum">#</th>
-            <th scope="col" class="nw" data-col="annid">ANN ID</th>
-            <th scope="col" data-col="anime">Anime</th>
-            <th scope="col" class="nw" data-col="type">Type</th>
-            <th scope="col" data-col="song">Song</th>
-            <th scope="col" data-col="artist">Artist</th>
-            <th scope="col" class="nw" data-col="vintage">Vintage</th>
-            <th scope="col" class="nw" data-col="difficulty">Dif</th>
-            <th scope="col" class="nw" data-col="category">Category</th>
-            <th scope="col" class="nw" data-col="broadcast">Broadcast</th>
-            <th scope="col" class="nw" data-col="length">Length</th>
-            <th scope="col" data-col="composer">Composer</th>
-            <th scope="col" data-col="arranger">Arranger</th>
-            <th scope="col" class="nw" data-col="annSongId">ANN Song ID</th>
-            <th scope="col" class="nw" data-col="amqSongId">AMQ Song ID</th>
-            <th scope="col" class="nw" data-col="anilistId">AniList ID</th>
-            <th scope="col" class="nw" data-col="malId">MAL ID</th>
-            <th scope="col" class="nw" data-col="kitsuId">Kitsu ID</th>
-            <th scope="col" class="nw" data-col="anidbId">AniDB ID</th>
-            <th scope="col" class="no-sort nw">Links</th>
-            <th scope="col" class="no-sort nw">Action</th>
-          </tr>
+        <colgroup></colgroup>
+        <thead style="display: none;">
+          <tr></tr>
         </thead>
         <tbody></tbody>
       </table>
+    </div>
+    <div id="searchLoading" class="d-flex justify-content-center align-items-center gap-2 py-3 text-muted d-none"
+      aria-live="polite">
+      <div class="spinner-border" role="status" aria-hidden="true"></div>
+      <span>Loading...</span>
     </div>
   </div>
 
@@ -351,6 +357,42 @@
     </div>
   </div>
 
+  <!-- Playlist Selection Modal -->
+  <div class="modal fade" id="playlistSelectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add to Playlist</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <div class="song-info mb-3 p-2 border rounded">
+              <!-- Song info will be populated here -->
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="playlistSelection" class="form-label">Select Playlist:</label>
+            <select id="playlistSelection" class="form-select">
+              <option value="">-- Select a playlist --</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="newPlaylistName" class="form-label">Or create new playlist:</label>
+            <div class="input-group">
+              <input type="text" id="newPlaylistName" class="form-control" placeholder="Enter playlist name">
+              <button id="btnCreateAndAdd" class="btn btn-outline-primary" type="button">Create & Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btnAddToPlaylist" class="btn btn-primary" disabled>Add to Playlist</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings Modal (full controls) -->
   <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -360,207 +402,534 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <div class="d-flex align-items-center flex-wrap" style="gap: 20px;">
-              <div>Version: <strong>1.1</strong></div>
-              <div>By: <strong>kempanator</strong></div>
-              <div><a href="https://github.com/kempanator" target="_blank" rel="noreferrer">GitHub</a></div>
-            </div>
-          </div>
-          <hr />
-          <div class="row g-3">
-            <div class="col-12 col-md-6">
-              <div class="form-label">Theme</div>
-              <div class="segmented-switch" id="settingTheme">
-                <button type="button" class="segment active" data-value="dark">Dark</button>
-                <button type="button" class="segment" data-value="light">Light</button>
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="form-label">Language (anime titles)</div>
-              <div class="segmented-switch" id="settingLanguage">
-                <button type="button" class="segment active" data-value="english">English</button>
-                <button type="button" class="segment" data-value="romaji">Romaji</button>
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="form-label">Radio mode</div>
-              <div class="segmented-switch" id="settingRadio">
-                <button type="button" class="segment active" data-value="none">None</button>
-                <button type="button" class="segment" data-value="repeat">Repeat</button>
-                <button type="button" class="segment" data-value="loopAll">Loop all</button>
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="form-label">Catbox host</div>
-              <div class="segmented-switch" id="settingCatbox">
-                <button type="button" class="segment" data-value="eudist">eudist</button>
-                <button type="button" class="segment active" data-value="nawdist">nawdist</button>
-                <button type="button" class="segment" data-value="naedist">naedist</button>
-              </div>
-            </div>
-          </div>
-          <div class="mt-4">
-            <h6>Hotkeys</h6>
-          </div>
-          <div class="row g-2">
-            <div class="col-6 col-md-3">
-              <label for="hkDownloadJson" class="form-label">Download JSON</label>
-              <input id="hkDownloadJson" class="form-control" placeholder="Press keys" />
-            </div>
-            <div class="col-6 col-md-3">
-              <label for="hkPlayPause" class="form-label">Play/Pause</label>
-              <input id="hkPlayPause" class="form-control" placeholder="Press keys" />
-            </div>
-            <div class="col-6 col-md-3">
-              <label for="hkPrev" class="form-label">Play Previous</label>
-              <input id="hkPrev" class="form-control" placeholder="Press keys" />
-            </div>
-            <div class="col-6 col-md-3">
-              <label for="hkNext" class="form-label">Play Next</label>
-              <input id="hkNext" class="form-control" placeholder="Press keys" />
-            </div>
-          </div>
-          <div class="mt-4">
-            <h6>Table Columns</h6>
-            <div class="row g-2">
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colPlus" checked />
-                  <label class="form-check-label" for="colPlus">Details (+)</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colRownum" checked />
-                  <label class="form-check-label" for="colRownum">Row Number (#)</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colAnnid" checked />
-                  <label class="form-check-label" for="colAnnid">ANN ID</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colAnime" checked />
-                  <label class="form-check-label" for="colAnime">Anime</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colType" checked />
-                  <label class="form-check-label" for="colType">Type</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colSong" checked />
-                  <label class="form-check-label" for="colSong">Song</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colArtist" checked />
-                  <label class="form-check-label" for="colArtist">Artist</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colVintage" checked />
-                  <label class="form-check-label" for="colVintage">Vintage</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colDifficulty" checked />
-                  <label class="form-check-label" for="colDifficulty">Difficulty</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colCategory" />
-                  <label class="form-check-label" for="colCategory">Category</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colBroadcast" />
-                  <label class="form-check-label" for="colBroadcast">Broadcast</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colLength" />
-                  <label class="form-check-label" for="colLength">Length</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colComposer" />
-                  <label class="form-check-label" for="colComposer">Composer</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colArranger" />
-                  <label class="form-check-label" for="colArranger">Arranger</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colAnnSongId" />
-                  <label class="form-check-label" for="colAnnSongId">ANN Song ID</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colAmqSongId" />
-                  <label class="form-check-label" for="colAmqSongId">AMQ Song ID</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colAnilistId" />
-                  <label class="form-check-label" for="colAnilistId">AniList ID</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colMalId" />
-                  <label class="form-check-label" for="colMalId">MAL ID</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colKitsuId" />
-                  <label class="form-check-label" for="colKitsuId">Kitsu ID</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colAnidbId" />
-                  <label class="form-check-label" for="colAnidbId">AniDB ID</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colLinks" checked />
-                  <label class="form-check-label" for="colLinks">Links</label>
-                </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="colAction" checked />
-                  <label class="form-check-label" for="colAction">Action</label>
-                </div>
-              </div>
-            </div>
-            <div class="mt-3 text-center">
-              <button id="btnResetColumns" class="btn btn-sm btn-outline-secondary">
-                <i class="fa-solid fa-rotate-left me-1"></i>Reset Columns
+          <!-- Tab Navigation -->
+          <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general"
+                type="button" role="tab" aria-controls="general" aria-selected="true">
+                <i class="fa-solid fa-cog me-1"></i>General
               </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table" type="button"
+                role="tab" aria-controls="table" aria-selected="false">
+                <i class="fa-solid fa-table me-1"></i>Table
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button"
+                role="tab" aria-controls="about" aria-selected="false">
+                <i class="fa-solid fa-info-circle me-1"></i>About
+              </button>
+            </li>
+          </ul>
+
+          <!-- Tab Content -->
+          <div class="tab-content" id="settingsTabContent">
+            <!-- General Tab -->
+            <div class="tab-pane show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+              <div class="pt-3">
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <div class="form-label">Theme</div>
+                    <div class="segmented-switch" id="settingTheme">
+                      <button type="button" class="segment active" data-value="dark">Dark</button>
+                      <button type="button" class="segment" data-value="light">Light</button>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="form-label">Language (anime titles)</div>
+                    <div class="segmented-switch" id="settingLanguage">
+                      <button type="button" class="segment active" data-value="english">English</button>
+                      <button type="button" class="segment" data-value="romaji">Romaji</button>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="form-label">Radio mode</div>
+                    <div class="segmented-switch" id="settingRadio">
+                      <button type="button" class="segment active" data-value="none">None</button>
+                      <button type="button" class="segment" data-value="repeat">Repeat</button>
+                      <button type="button" class="segment" data-value="loopAll">Loop all</button>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="form-label">File Host</div>
+                    <div class="segmented-switch" id="settingFileHost">
+                      <button type="button" class="segment" data-value="eudist">eudist</button>
+                      <button type="button" class="segment active" data-value="nawdist">nawdist</button>
+                      <button type="button" class="segment" data-value="naedist">naedist</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <h6>Hotkeys</h6>
+                </div>
+                <div class="row g-2">
+                  <div class="col-6 col-md-3">
+                    <label for="hkDownloadJson" class="form-label">Download JSON</label>
+                    <input id="hkDownloadJson" class="form-control" placeholder="Press keys" />
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label for="hkPlayPause" class="form-label">Play/Pause</label>
+                    <input id="hkPlayPause" class="form-control" placeholder="Press keys" />
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label for="hkPrev" class="form-label">Play Previous</label>
+                    <input id="hkPrev" class="form-control" placeholder="Press keys" />
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label for="hkNext" class="form-label">Play Next</label>
+                    <input id="hkNext" class="form-control" placeholder="Press keys" />
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <h6>Data Management</h6>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button id="btnImportSettings" class="btn btn-sm btn-outline-primary">
+                      <i class="fa-solid fa-file-import me-1"></i>Import
+                    </button>
+                    <button id="btnExportSettings" class="btn btn-sm btn-outline-secondary">
+                      <i class="fa-solid fa-file-export me-1"></i>Export Settings
+                    </button>
+                    <button id="btnExportPlaylists" class="btn btn-sm btn-outline-secondary">
+                      <i class="fa-solid fa-file-export me-1"></i>Export Playlists
+                    </button>
+                    <button id="btnResetAllSettings" class="btn btn-sm btn-outline-warning">
+                      <i class="fa-solid fa-rotate-left me-1"></i>Reset All Settings
+                    </button>
+                    <button id="btnDeleteAllPlaylists" class="btn btn-sm btn-outline-danger">
+                      <i class="fa-solid fa-trash me-1"></i>Delete All Playlists
+                    </button>
+                  </div>
+                  <input id="fileImport" type="file" accept="application/json,.json" class="d-none" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Table Tab -->
+            <div class="tab-pane" id="table" role="tabpanel" aria-labelledby="table-tab">
+              <div class="pt-3">
+                <h6>Table Settings</h6>
+                <div class="row g-3 mb-4">
+                  <div class="col-12 col-md-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingZebraStripe" checked>
+                      <label class="form-check-label" for="settingZebraStripe">
+                        Zebra stripe table rows
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <h6>Table Columns</h6>
+                <p class="text-muted small mb-3">Click rows to show/hide columns. Drag the grip icon to reorder columns.
+                </p>
+                <div id="columnOrderList" class="list-group">
+                  <!-- Columns will be populated here -->
+                </div>
+                <div class="mt-3 text-center">
+                  <button id="btnResetColumnOrder" class="btn btn-sm btn-outline-secondary me-2">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Reset Order
+                  </button>
+                  <button id="btnResetColumns" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-eye-slash me-1"></i>Reset Visibility
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- About Tab -->
+            <div class="tab-pane" id="about" role="tabpanel" aria-labelledby="about-tab">
+              <div class="pt-3">
+                <!-- ADB2 Info -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0"><i class="fa-solid fa-database me-2"></i>ADB2</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row g-3">
+                      <div class="col-12 col-md-6">
+                        <div class="d-flex align-items-center">
+                          <i class="fa-solid fa-code-branch me-2 text-primary"></i>
+                          <div>
+                            <small class="text-muted">Version</small>
+                            <div><strong>1.2</strong></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div class="d-flex align-items-center">
+                            <i class="fa-solid fa-user me-2 text-primary"></i>
+                            <div>
+                              <small class="text-muted">Author</small>
+                              <div><strong>kempanator</strong></div>
+                            </div>
+                          </div>
+                          <a href="https://github.com/kempanator/" target="_blank" rel="noreferrer"
+                            class="btn btn-sm btn-outline-primary">
+                            <i class="fa-brands fa-github me-1"></i>GitHub
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- AnisongDB Info -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0"><i class="fa-solid fa-server me-2"></i>AnisongDB</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="mb-3">
+                      <p class="mb-3">
+                        ADB2 uses the AnisongDB API, created by xSardine, to fetch data.
+                      </p>
+                      <div class="d-flex align-items-center mb-2">
+                        <i class="fa-solid fa-globe me-2 text-success"></i>
+                        <div>
+                          <small class="text-muted">Website</small>
+                          <div><a href="https://anisongdb.com/" target="_blank"
+                              rel="noreferrer">https://anisongdb.com/</a></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row g-2">
+                      <div class="col-12 col-md-4">
+                        <a href="https://github.com/xSardine/AMQ-Artists-DB" target="_blank" rel="noreferrer"
+                          class="btn btn-sm btn-outline-secondary w-100">
+                          <i class="fa-brands fa-github me-1"></i>GitHub
+                        </a>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <a href="https://anisongdb.com/docs/" target="_blank" rel="noreferrer"
+                          class="btn btn-sm btn-outline-secondary w-100">
+                          <i class="fa-solid fa-book me-1"></i>API Docs
+                        </a>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <a href="https://stats.anisongdb.com/" target="_blank" rel="noreferrer"
+                          class="btn btn-sm btn-outline-secondary w-100">
+                          <i class="fa-solid fa-chart-line me-1"></i>Stats
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- AMQ Info -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0"><i class="fa-solid fa-music me-2"></i>Anime Music Quiz (AMQ)</h6>
+                  </div>
+                  <div class="card-body">
+                    <p class="mb-3">
+                      AnisongDB is built upon the database of Anime Music Quiz, created by Egerod.
+                    </p>
+                    <div class="row g-2">
+                      <div class="col-12 col-md-6">
+                        <div class="d-flex align-items-center">
+                          <i class="fa-solid fa-gamepad me-2 text-warning"></i>
+                          <div>
+                            <small class="text-muted">Game</small>
+                            <div><a href="https://animemusicquiz.com/" target="_blank"
+                                rel="noreferrer">https://animemusicquiz.com/</a></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-6">
+                        <a href="https://www.patreon.com/NextWorldGames" target="_blank" rel="noreferrer"
+                          class="btn btn-warning w-100">
+                          <i class="fa-brands fa-patreon me-1"></i>Support on Patreon
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Playlists Modal -->
+  <div class="modal fade" id="playlistsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Playlists</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Save New Playlist Section -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <h6 class="mb-0">
+                Save Current Results as Playlist
+                <i class="fa-solid fa-info-circle ms-2" data-bs-toggle="popover" data-bs-trigger="hover"
+                  data-bs-placement="top"
+                  data-bs-content="Playlists are saved as ANN Song IDs in local storage. When loading a playlist, the app sends API requests to fetch full song information for each ID."></i>
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row g-2">
+                <div class="col-md-8">
+                  <input type="text" class="form-control" id="playlistName" placeholder="Enter playlist name...">
+                </div>
+                <div class="col-md-4">
+                  <button type="button" class="btn btn-primary w-100" id="btnSavePlaylist">
+                    <i class="fa-solid fa-save me-1"></i>Save Playlist
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Load Playlists Section -->
+          <div class="card">
+            <div class="card-header">
+              <h6 class="mb-0">Saved Playlists</h6>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <input type="text" class="form-control" id="playlistSearch" placeholder="Search playlists...">
+              </div>
+              <div id="playlistList">
+                <!-- Playlists will be populated here -->
+              </div>
+              <div id="noPlaylistsMessage" class="text-center text-muted py-4" style="display: none;">
+                <i class="fa-solid fa-folder-open fa-2x mb-2"></i>
+                <p>No saved playlists yet.</p>
+                <p class="small">Save some playlists first to see them here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Modal -->
+  <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fa-solid fa-chart-bar me-2"></i>Table Statistics
+          </h5>
+          <div class="ms-auto d-flex align-items-center gap-2">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <!-- Loading State -->
+          <div id="statsLoading" class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted">Calculating table statistics...</p>
+          </div>
+
+          <!-- Error State -->
+          <div id="statsError" class="text-center py-5 d-none">
+            <i class="fa-solid fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+            <h6>Failed to calculate statistics</h6>
+            <p class="text-muted mb-3">Unable to calculate table statistics. Please try again.</p>
+            <button id="btnRetryStats" class="btn btn-primary">
+              <i class="fa-solid fa-rotate me-1"></i>Retry
+            </button>
+          </div>
+
+          <!-- Content -->
+          <div id="statsContent" class="d-none">
+            <!-- Overview Cards -->
+            <div class="row g-3 mb-4">
+              <div class="col-6 col-md-3">
+                <div class="card border-0 bg-primary bg-opacity-10">
+                  <div class="card-body text-center">
+                    <i class="fa-solid fa-music text-primary fa-2x mb-2"></i>
+                    <h4 class="mb-1" id="totalSongs">-</h4>
+                    <small class="text-muted">Total Songs</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card border-0 bg-success bg-opacity-10">
+                  <div class="card-body text-center">
+                    <i class="fa-solid fa-tv text-success fa-2x mb-2"></i>
+                    <h4 class="mb-1" id="totalAnime">-</h4>
+                    <small class="text-muted">Total Anime</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card border-0 bg-info bg-opacity-10">
+                  <div class="card-body text-center">
+                    <i class="fa-solid fa-microphone text-info fa-2x mb-2"></i>
+                    <h4 class="mb-1" id="totalArtists">-</h4>
+                    <small class="text-muted">Total Artists</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card border-0 bg-warning bg-opacity-10">
+                  <div class="card-body text-center">
+                    <i class="fa-solid fa-calendar-days text-warning fa-2x mb-2"></i>
+                    <h4 class="mb-1" id="totalSeasons">-</h4>
+                    <small class="text-muted">Total Seasons</small>
+                  </div>
+                </div>
+              </div>
+              <!-- New averages: difficulty & length -->
+              <div class="col-6 col-md-3">
+                <div class="card border-0 bg-secondary bg-opacity-10">
+                  <div class="card-body text-center">
+                    <i class="fa-solid fa-signal text-secondary fa-2x mb-2"></i>
+                    <h4 class="mb-1" id="avgDifficulty">-</h4>
+                    <small class="text-muted">Average Difficulty</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card border-0 bg-secondary bg-opacity-10">
+                  <div class="card-body text-center">
+                    <i class="fa-solid fa-stopwatch text-secondary fa-2x mb-2"></i>
+                    <h4 class="mb-1" id="avgSongLength">-</h4>
+                    <small class="text-muted">Average Song Length</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div id="chartsView">
+              <div class="row g-4">
+                <!-- Song Types Chart -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <h6 class="mb-0">
+                        <i class="fa-solid fa-list me-2"></i>Song Types Distribution
+                      </h6>
+                      <button id="btnSongTypesToggle" class="btn btn-sm btn-outline-secondary" title="Toggle chart/numbers">
+                        <i class="fa-solid fa-list-ol"></i>
+                      </button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="songTypesChart" width="400" height="200"></canvas>
+                      <div id="songTypesNumbersInline" class="list-group list-group-flush d-none"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Song Categories Chart -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <h6 class="mb-0">
+                        <i class="fa-solid fa-tags me-2"></i>Song Categories Distribution
+                      </h6>
+                      <button id="btnSongCategoriesToggle" class="btn btn-sm btn-outline-secondary" title="Toggle chart/numbers">
+                        <i class="fa-solid fa-list-ol"></i>
+                      </button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="songCategoriesChart" width="400" height="200"></canvas>
+                      <div id="songCategoriesNumbersInline" class="list-group list-group-flush d-none"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Broadcast Types Chart -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <h6 class="mb-0">
+                        <i class="fa-solid fa-broadcast-tower me-2"></i>Broadcast Types Distribution
+                      </h6>
+                      <button id="btnBroadcastTypesToggle" class="btn btn-sm btn-outline-secondary" title="Toggle chart/numbers">
+                        <i class="fa-solid fa-list-ol"></i>
+                      </button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="broadcastTypesChart" width="400" height="200"></canvas>
+                      <div id="broadcastTypesNumbersInline" class="list-group list-group-flush d-none"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Anime Types Chart -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                      <h6 class="mb-0">
+                        <i class="fa-solid fa-clapperboard me-2"></i>Anime Types Distribution
+                      </h6>
+                      <button id="btnAnimeTypesToggle" class="btn btn-sm btn-outline-secondary" title="Toggle chart/numbers">
+                        <i class="fa-solid fa-list-ol"></i>
+                      </button>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="animeTypesChart" width="400" height="200"></canvas>
+                      <div id="animeTypesNumbersInline" class="list-group list-group-flush d-none"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Difficulty Chart -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100">
+                    <div class="card-header">
+                      <h6 class="mb-0">
+                        <i class="fa-solid fa-signal me-2"></i>Difficulty Distribution
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="difficultyChart" width="400" height="200"></canvas>
+                    </div>
+                  </div>
+                </div>
+                <!-- Vintage Chart -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100">
+                    <div class="card-header">
+                      <h6 class="mb-0">
+                        <i class="fa-solid fa-calendar me-2"></i>Vintage Distribution
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="vintageChart" width="400" height="200"></canvas>
+                    </div>
+                  </div>
+                </div>
+                <!-- Top Artists (numbers) -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100">
+                    <div class="card-header">
+                      <h6 class="mb-0">
+                        <i class="fa-solid fa-microphone me-2"></i>Top Artists
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div id="topArtistsNumbers" class="list-group list-group-flush"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Top Anime (numbers) -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100">
+                    <div class="card-header">
+                      <h6 class="mb-0">
+                        <i class="fa-solid fa-tv me-2"></i>Top Anime
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div id="topAnimeNumbers" class="list-group list-group-flush"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -575,8 +944,30 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- App JS -->
-  <script src="script.js"></script>
+  <script src="core/config.js"></script>
+  <script src="core/eventBus.js"></script>
+  <script src="core/appState.js"></script>
+
+  <script src="components/infoModal.js"></script>
+  <script src="components/audioPlayer.js"></script>
+  <script src="components/rowComponent.js"></script>
+  <script src="components/tableComponent.js"></script>
+  <script src="components/settingsModal.js"></script>
+  <script src="components/playlistModal.js"></script>
+  <script src="components/playlistSelectionModal.js"></script>
+  <script src="components/toolbar.js"></script>
+  <script src="components/statsModal.js"></script>
+  <script src="components/alertComponent.js"></script>
+  <script src="managers/settingsManager.js"></script>
+  <script src="managers/hotkeyManager.js"></script>
+  <script src="managers/tableManager.js"></script>
+  <script src="managers/searchManager.js"></script>
+  <script src="managers/playlistManager.js"></script>
+  <script src="managers/statsManager.js"></script>
+  <script src="main.js"></script>
+
 </body>
 
 </html>
