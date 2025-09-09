@@ -261,7 +261,8 @@ class PlaylistManager {
       return;
     }
 
-    // Show loading spinner during playlist loading
+    // Clear the current table and show loading spinner
+    eventBus.emit("table:clear");
     searchManager.setLoading(true);
 
     // Process chunks sequentially

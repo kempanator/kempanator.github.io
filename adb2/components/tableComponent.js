@@ -221,7 +221,7 @@ class TableComponent {
         malId: "80px",
         kitsuId: "80px",
         anidbId: "80px",
-        links: "125px",
+        links: "100px",
         action: "100px"
       };
 

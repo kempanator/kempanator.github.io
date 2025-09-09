@@ -19,7 +19,7 @@ class PlaylistModal {
 
   wireEvents() {
     // Save current results as playlist
-    this.$btnSavePlaylist.on("click", function () {
+    this.$btnSavePlaylist.on("click", () => {
       const name = $("#playlistName").val().trim();
       if (!name) {
         showAlert("Please enter a playlist name.", "warning");
@@ -35,7 +35,7 @@ class PlaylistModal {
 
       playlistManager.savePlaylist(name, annSongIds);
       this.$playlistName.val("");
-      playlistModal.renderPlaylistList();
+      this.renderPlaylistList();
       showAlert(`Playlist "${name}" saved with ${annSongIds.length} songs`, "success");
     });
 

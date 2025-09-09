@@ -59,9 +59,7 @@ class TableManager {
       if (songs.visible.length === 0) {
         return;
       }
-      if (confirm("Are you sure you want to clear all results from the table?")) {
-        this.clearData();
-      }
+      this.clearData();
     });
     // Wire table DOM events
     $("#resultsTable thead").on("click", "th", (e) => {
@@ -336,8 +334,10 @@ class TableManager {
 
     // Re-render the table with the new order
     this.table.setData(this.state.visible);
-    // Broadcast unified reorder event for consumers
-    eventBus.emit("table:reordered", { order: this.table.getDomOrderKeys() });
+
+    // Update UI indicators for current playing and playlists
+    this.table.markPlaying();
+    this.table.markExistingInPlaylist(playlistManager.autoAddPlaylistId);
   }
 
   // Reverse the table rows and update state to match
@@ -358,8 +358,10 @@ class TableManager {
 
     // Re-render the table with the new order
     this.table.setData(this.state.visible);
-    // Broadcast unified reorder event for consumers
-    eventBus.emit("table:reordered", { order: this.table.getDomOrderKeys() });
+
+    // Update UI indicators for current playing and playlists
+    this.table.markPlaying();
+    this.table.markExistingInPlaylist(playlistManager.autoAddPlaylistId);
   }
 
   // Export table data in the specified format (csv or json)
@@ -556,34 +558,8 @@ class TableManager {
 
   // Optimized method for file host changes - updates only file links without full re-render
   syncFileHostChange() {
-    // Update only the file link cells in existing rows
-    const rows = this.table.rows;
-
-    // Get the current column order to find links column position
-    const columnOrder = settingsManager.get("columnOrder");
-    const linksColumnIndex = columnOrder.indexOf("links");
-
-    if (linksColumnIndex === -1) return;
-
-    rows.forEach((row, key) => {
-      const tr = document.querySelector(`#resultsTable tbody tr[data-key="${CSS.escape(key)}"]`);
-      if (tr) {
-        // Get the links cell by its position in the row
-        const cells = tr.querySelectorAll("td");
-        const linksCell = cells[linksColumnIndex];
-
-        if (linksCell) {
-          const hqUrl = audioPlayer?.buildMediaUrl(row.data.HQ) || "";
-          const mqUrl = audioPlayer?.buildMediaUrl(row.data.MQ) || "";
-          const mp3Url = audioPlayer?.buildMediaUrl(row.data.audio) || "";
-
-          linksCell.innerHTML = [
-            row.renderLinkLabel("720", hqUrl),
-            row.renderLinkLabel("480", mqUrl),
-            row.renderLinkLabel("MP3", mp3Url)
-          ].join(" ");
-        }
-      }
+    this.table.rows.forEach((row) => {
+      row.updateLinkHrefs();
     });
   }
 

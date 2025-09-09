@@ -109,7 +109,7 @@ class RowComponent {
     const $tdNum = $("<td>").addClass("nw").text(String(this.index + 1));
     const $tdAnn = $("<td>").addClass("nw").text(this.data.annId ?? "");
     const $tdAnime = $("<td>").addClass("trunc").text(anime).attr("title", anime);
-    const $tdType = $("<td>").addClass("nw").text(type);
+    const $tdType = $("<td>").addClass("nw").text(type).append(this.tdTypeSubTextElement(this.data)).attr("title", this.tdTypeTitleText(this.data));
     const $tdSong = $("<td>").addClass("trunc").text(song).attr("title", song);
     const $tdArtist = $("<td>").addClass("trunc").text(artist).attr("title", artist);
     const $tdVintage = $("<td>").addClass("nw").text(vintage || "");
@@ -127,9 +127,9 @@ class RowComponent {
     const $tdAnidbId = $("<td>").addClass("nw").text(anidbId);
 
     // Links: always render 720/480/mp3, disabled if missing
-    const hqUrl = audioPlayer?.buildMediaUrl(this.data.HQ) || "";
-    const mqUrl = audioPlayer?.buildMediaUrl(this.data.MQ) || "";
-    const mp3Url = audioPlayer?.buildMediaUrl(this.data.audio) || "";
+    const hqUrl = audioPlayer.buildMediaUrl(this.data.HQ) || "";
+    const mqUrl = audioPlayer.buildMediaUrl(this.data.MQ) || "";
+    const mp3Url = audioPlayer.buildMediaUrl(this.data.audio) || "";
     const $tdLinks = $("<td>").addClass("nw");
     $tdLinks.append(this.renderLinkLabel("720", hqUrl));
     $tdLinks.append(this.renderLinkLabel("480", mqUrl));
@@ -171,11 +171,34 @@ class RowComponent {
     };
   }
 
+  // create a sub text element to show dub and rebroadcast flags for the type column
+  tdTypeSubTextElement(d) {
+    let text = "";
+    if (d.isDub) text += "D";
+    if (d.isRebroadcast) text += "R";
+    if (text) {
+      return $("<span>")
+        .addClass("text-muted ms-1 fw-bold")
+        .css({ fontSize: "0.8em" })
+        .text(text)
+    }
+    return null;
+  }
+
+  // create a title attribute text to show dub and rebroadcast flags for the type column
+  tdTypeTitleText(d) {
+    if (d.isDub && d.isRebroadcast) return `${d.songType} (Dub/Rebroadcast)`;
+    if (d.isDub) return `${d.songType} (Dub)`;
+    if (d.isRebroadcast) return `${d.songType} (Rebroadcast)`;
+    return d.songType;
+  }
+
   // Create a link or disabled span element for media file labels
   renderLinkLabel(label, url) {
     if (url) {
       return $("<a>")
         .addClass("link-label")
+        .attr("data-label", label)
         .attr("href", escapeHtml(url))
         .attr("target", "_blank")
         .attr("rel", "noreferrer")
@@ -183,8 +206,21 @@ class RowComponent {
     }
     return $("<span>")
       .addClass("link-label disabled")
+      .attr("data-label", label)
       .attr("aria-disabled", "true")
       .text(label);
+  }
+
+  // Update link hrefs in-place by rewriting host on existing anchors
+  updateLinkHrefs() {
+    const $linksCell = this.$tableElement.find('td[data-col="links"]');
+    $linksCell.find("a.link-label").each(function () {
+      const current = this.getAttribute("href");
+      const rewritten = audioPlayer.rewriteFileHost(current);
+      if (rewritten !== current) {
+        this.setAttribute("href", rewritten);
+      }
+    });
   }
 
   // Attach event listeners to table row elements for user interactions
