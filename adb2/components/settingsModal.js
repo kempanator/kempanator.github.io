@@ -11,7 +11,7 @@ class SettingsModal {
     this.$importSettings = $("#btnImportSettings");
     this.$exportSettings = $("#btnExportSettings");
     this.$exportPlaylists = $("#btnExportPlaylists");
-    this.$importFile = $("#fileImport");
+    this.$settingsFileInput = $("#settingsFileInput");
     this.$resetAllSettings = $("#btnResetAllSettings");
     this.$deleteAllPlaylists = $("#btnDeleteAllPlaylists");
     this.wireEvents();
@@ -80,10 +80,10 @@ class SettingsModal {
     });
 
     // Import/Export/Reset actions
-    this.$importSettings.on("click", () => { this.$importFile.trigger("click"); });
+    this.$importSettings.on("click", () => { this.$settingsFileInput.trigger("click"); });
     this.$exportSettings.on("click", () => settingsManager.exportSettings());
     this.$exportPlaylists.on("click", () => playlistManager.exportAllPlaylists());
-    this.$importFile.on("change", (evt) => settingsManager.onImportFile(evt));
+    this.$settingsFileInput.on("change", (evt) => settingsManager.onImportFile(evt));
     this.$resetAllSettings.on("click", () => {
       if (confirm("Are you sure you want to reset all settings to defaults? This action cannot be undone.")) {
         settingsManager.resetAllSettings();

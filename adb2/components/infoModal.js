@@ -242,7 +242,7 @@ class InfoModal {
     const animeType = this.sanitize(d.animeType || "");
     const animeCategory = this.sanitize(d.animeCategory || "");
     const broadcast = broadcastText(d);
-    const length = tableManager.formatDurationSeconds(d.songLength);
+    const length = formatDurationSeconds(d.songLength);
 
     const ids = d.linked_ids || {};
 
@@ -297,7 +297,7 @@ class InfoModal {
     const $col2 = $("<div>").addClass("col-md-6");
     $col2.append($("<div>").html(`<span class="fw-semibold">Anime Type:</span> ${escapeHtml(animeType)}`));
     $col2.append($("<div>").html(`<span class="fw-semibold">Anime Category:</span> ${escapeHtml(animeCategory)}`));
-    $col2.append($("<div>").html(`<span class="fw-semibold">Category:</span> ${escapeHtml(songCategory)}`));
+    $col2.append($("<div>").html(`<span class="fw-semibold">Song Category:</span> ${escapeHtml(songCategory)}`));
     $col2.append($("<div>").html(`<span class="fw-semibold">Broadcast:</span> ${escapeHtml(broadcast)}`));
     $row1.append($col2);
     $root.append($row1);

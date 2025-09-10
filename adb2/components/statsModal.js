@@ -6,10 +6,7 @@ class StatsModal {
 
     // Store jQuery references
     this.$btnStats = $("#btnStats");
-    this.$btnRetryStats = $("#btnRetryStats");
     this.$statsModal = $("#statsModal");
-    this.$statsLoading = $("#statsLoading");
-    this.$statsError = $("#statsError");
     this.$statsContent = $("#statsContent");
     this.$chartsView = $("#chartsView");
     this.$totalSongs = $("#totalSongs");
@@ -37,9 +34,8 @@ class StatsModal {
   }
 
   wireEvents() {
-    // Open/Retry
+    // Open
     this.$btnStats.on("click", () => this.loadStats());
-    this.$btnRetryStats.on("click", () => this.loadStats());
 
     // Song Types per-card toggle
     this.$btnSongTypesToggle.on("click", () => this.toggleSongTypesCard());
@@ -341,19 +337,12 @@ class StatsModal {
   }
 
   loadStats() {
-    this.$statsLoading.removeClass("d-none");
-    this.$statsError.addClass("d-none");
-    this.$statsContent.addClass("d-none");
-
     try {
       const data = statsManager.calculateStats();
       this.hasLoaded = true;
-      this.$statsLoading.addClass("d-none");
       this.showContent();
       this.updateStatsDisplay(data);
     } catch (error) {
-      this.$statsLoading.addClass("d-none");
-      this.$statsError.removeClass("d-none");
       console.error("Statistics calculation failed:", error);
     }
   }
@@ -361,8 +350,6 @@ class StatsModal {
   showContent() {
     this.$statsContent.removeClass("d-none");
   }
-
-  // Removed toggleView; combined layout only
 }
 
 const statsModal = new StatsModal();

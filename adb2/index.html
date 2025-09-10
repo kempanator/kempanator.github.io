@@ -20,9 +20,9 @@
       <a class="navbar-brand" href="#">ADB2</a>
       <div class="d-flex align-items-center gap-2">
         <button id="btnPrevSong" class="btn btn-sm btn-outline-secondary navbar-btn-square" title="Previous"><i
-          class="fa-solid fa-backward-step"></i></button>
+            class="fa-solid fa-backward-step"></i></button>
         <button id="btnNextSong" class="btn btn-sm btn-outline-secondary navbar-btn-square" title="Next"><i
-          class="fa-solid fa-forward-step"></i></button>
+            class="fa-solid fa-forward-step"></i></button>
         <button id="btnPlaylists" class="btn btn-sm btn-outline-secondary navbar-btn-square" data-bs-toggle="modal"
           data-bs-target="#playlistsModal" aria-label="Playlists" title="Playlists">
           <i class="fa-solid fa-list"></i>
@@ -93,19 +93,19 @@
             <li>
               <hr class="dropdown-divider">
             </li>
+            <li><button id="btnImportFile" class="dropdown-item" type="button"><i
+                  class="fa-solid fa-file-import me-2"></i>Import File</button></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             <li><button id="btnExportCSV" class="dropdown-item" type="button"><i
                   class="fa-solid fa-file-csv me-2"></i>Export as CSV</button></li>
             <li><button id="btnExportJSON" class="dropdown-item" type="button"><i
                   class="fa-solid fa-file-code me-2"></i>Export as JSON</button></li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li><button id="btnImportJSON" class="dropdown-item" type="button"><i
-                  class="fa-solid fa-file-import me-2"></i>Import JSON</button></li>
           </ul>
         </div>
       </div>
-      <input id="fileJson" type="file" accept="application/json,.json" class="d-none" />
+      <input id="songListFileInput" type="file" accept="application/json,.json,text/csv,.csv" class="d-none" />
     </div>
   </div>
 
@@ -501,7 +501,7 @@
                       <i class="fa-solid fa-trash me-1"></i>Delete All Playlists
                     </button>
                   </div>
-                  <input id="fileImport" type="file" accept="application/json,.json" class="d-none" />
+                  <input id="settingsFileInput" type="file" accept="application/json,.json" class="d-none" />
                 </div>
               </div>
             </div>
@@ -727,26 +727,7 @@
           </div>
         </div>
         <div class="modal-body">
-          <!-- Loading State -->
-          <div id="statsLoading" class="text-center py-5">
-            <div class="spinner-border text-primary mb-3" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="text-muted">Calculating table statistics...</p>
-          </div>
-
-          <!-- Error State -->
-          <div id="statsError" class="text-center py-5 d-none">
-            <i class="fa-solid fa-exclamation-triangle text-warning fa-2x mb-3"></i>
-            <h6>Failed to calculate statistics</h6>
-            <p class="text-muted mb-3">Unable to calculate table statistics. Please try again.</p>
-            <button id="btnRetryStats" class="btn btn-primary">
-              <i class="fa-solid fa-rotate me-1"></i>Retry
-            </button>
-          </div>
-
-          <!-- Content -->
-          <div id="statsContent" class="d-none">
+          <div id="statsContent">
             <!-- Overview Cards -->
             <div class="row g-3 mb-4">
               <div class="col-6 col-md-3">
@@ -816,7 +797,8 @@
                       <h6 class="mb-0">
                         <i class="fa-solid fa-list me-2"></i>Song Types Distribution
                       </h6>
-                      <button id="btnSongTypesToggle" class="btn btn-sm btn-outline-secondary" title="Toggle chart/numbers">
+                      <button id="btnSongTypesToggle" class="btn btn-sm btn-outline-secondary"
+                        title="Toggle chart/numbers">
                         <i class="fa-solid fa-list-ol"></i>
                       </button>
                     </div>
@@ -833,7 +815,8 @@
                       <h6 class="mb-0">
                         <i class="fa-solid fa-tags me-2"></i>Song Categories Distribution
                       </h6>
-                      <button id="btnSongCategoriesToggle" class="btn btn-sm btn-outline-secondary" title="Toggle chart/numbers">
+                      <button id="btnSongCategoriesToggle" class="btn btn-sm btn-outline-secondary"
+                        title="Toggle chart/numbers">
                         <i class="fa-solid fa-list-ol"></i>
                       </button>
                     </div>
@@ -850,7 +833,8 @@
                       <h6 class="mb-0">
                         <i class="fa-solid fa-broadcast-tower me-2"></i>Broadcast Types Distribution
                       </h6>
-                      <button id="btnBroadcastTypesToggle" class="btn btn-sm btn-outline-secondary" title="Toggle chart/numbers">
+                      <button id="btnBroadcastTypesToggle" class="btn btn-sm btn-outline-secondary"
+                        title="Toggle chart/numbers">
                         <i class="fa-solid fa-list-ol"></i>
                       </button>
                     </div>
@@ -867,7 +851,8 @@
                       <h6 class="mb-0">
                         <i class="fa-solid fa-clapperboard me-2"></i>Anime Types Distribution
                       </h6>
-                      <button id="btnAnimeTypesToggle" class="btn btn-sm btn-outline-secondary" title="Toggle chart/numbers">
+                      <button id="btnAnimeTypesToggle" class="btn btn-sm btn-outline-secondary"
+                        title="Toggle chart/numbers">
                         <i class="fa-solid fa-list-ol"></i>
                       </button>
                     </div>
@@ -962,6 +947,7 @@
   <script src="components/alertComponent.js"></script>
   <script src="managers/settingsManager.js"></script>
   <script src="managers/hotkeyManager.js"></script>
+  <script src="managers/ioManager.js"></script>
   <script src="managers/tableManager.js"></script>
   <script src="managers/searchManager.js"></script>
   <script src="managers/playlistManager.js"></script>

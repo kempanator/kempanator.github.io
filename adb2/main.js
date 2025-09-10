@@ -15,6 +15,16 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Format duration in seconds to MM:SS display format
+function formatDurationSeconds(sec) {
+  const n = Number(sec);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  const m = Math.floor(n / 60);
+  const s = Math.round(n - m * 60);
+  const ss = String(s).padStart(2, "0");
+  return `${m}:${ss}`;
+}
+
 // Get broadcast type string based on dub and rebroadcast flags
 function broadcastText(d) {
   if (d.isDub && d.isRebroadcast) return "Dub/Rebroadcast";

@@ -11,8 +11,8 @@ class Toolbar {
     this.$btnTable = $("#btnTable");
     this.$btnExportCSV = $("#btnExportCSV");
     this.$btnExportJSON = $("#btnExportJSON");
-    this.$btnImportJSON = $("#btnImportJSON");
-    this.$fileJson = $("#fileJson");
+    this.$btnImportFile = $("#btnImportFile");
+    this.$songListFileInput = $("#songListFileInput");
     this.$btnPrevSong = $("#btnPrevSong");
     this.$btnNextSong = $("#btnNextSong");
     this.$btnShuffle = $("#btnShuffle");
@@ -46,8 +46,8 @@ class Toolbar {
     // Data operations
     this.$btnExportCSV.on("click", () => tableManager.export("csv"));
     this.$btnExportJSON.on("click", () => tableManager.export("json"));
-    this.$btnImportJSON.on("click", () => this.$fileJson.trigger("click"));
-    this.$fileJson.on("change", (event) => tableManager.onUploadJson(event));
+    this.$btnImportFile.on("click", () => this.$songListFileInput.trigger("click"));
+    this.$songListFileInput.on("change", (event) => tableManager.onUploadJson(event));
 
     // Player controls
     this.$btnPrevSong.on("click", () => eventBus.emit("audio:previous"));

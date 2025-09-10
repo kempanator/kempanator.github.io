@@ -91,10 +91,10 @@ class RowComponent {
     const song = this.sanitize(this.data.songName);
     const artist = this.sanitize(this.data.songArtist);
     const vintage = this.sanitize(this.data.animeVintage);
-    const difficulty = (this.data.songDifficulty ?? "");
+    const difficulty = this.formatDifficulty(this.data.songDifficulty);
     const category = this.sanitize(this.data.songCategory || "");
     const broadcast = broadcastText(this.data);
-    const length = this.formatDurationSeconds(this.data.songLength);
+    const length = formatDurationSeconds(this.data.songLength);
     const composer = this.sanitize(this.data.songComposer || "");
     const arranger = this.sanitize(this.data.songArranger || "");
     const annSongId = this.data.annSongId ?? "";
@@ -113,7 +113,7 @@ class RowComponent {
     const $tdSong = $("<td>").addClass("trunc").text(song).attr("title", song);
     const $tdArtist = $("<td>").addClass("trunc").text(artist).attr("title", artist);
     const $tdVintage = $("<td>").addClass("nw").text(vintage || "");
-    const $tdDiff = $("<td>").addClass("nw").text((difficulty === null || difficulty === undefined) ? "" : String(difficulty));
+    const $tdDiff = $("<td>").addClass("nw").text(difficulty);
     const $tdCategory = $("<td>").addClass("nw").text(category);
     const $tdBroadcast = $("<td>").addClass("nw").text(broadcast);
     const $tdLength = $("<td>").addClass("nw").text(length);
@@ -169,6 +169,12 @@ class RowComponent {
       links: $tdLinks,
       action: $tdAct
     };
+  }
+
+  // format the song difficulty into an integer
+  formatDifficulty(dif) {
+    dif = parseInt(dif);
+    return isNaN(dif) ? "" : dif;
   }
 
   // create a sub text element to show dub and rebroadcast flags for the type column
@@ -313,16 +319,6 @@ class RowComponent {
     if (up.startsWith("ENDING") || up.startsWith("ED")) { const n = getDigits(s); return "ED" + n; }
     if (up.startsWith("INSERT") || up.startsWith("IN")) { return "IN"; }
     return s;
-  }
-
-  // Format duration in seconds to MM:SS display format
-  formatDurationSeconds(sec) {
-    const n = Number(sec);
-    if (!Number.isFinite(n) || n <= 0) return "";
-    const m = Math.floor(n / 60);
-    const s = Math.round(n - m * 60);
-    const ss = String(s).padStart(2, "0");
-    return `${m}:${ss}`;
   }
 
   // Clean up DOM elements and remove them from the document

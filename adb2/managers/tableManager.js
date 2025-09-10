@@ -367,123 +367,18 @@ class TableManager {
   // Export table data in the specified format (csv or json)
   export(format) {
     const data = this.table.getVisibleData();
-
-    if (format === "csv") {
-      this.exportAsCSV(data);
-    } else if (format === "json") {
-      this.exportAsJSON(data);
-    }
+    ioManager.export(data, format);
   }
 
-  // Export data as JSON file with formatted content
-  exportAsJSON(data) {
-    const content = JSON.stringify(data, null, 2);
-    const filename = this.makeDownloadFilename("json");
-    this.downloadFile(content, filename, "application/json");
-  }
-
-  // Export data as CSV file with all columns and proper escaping
-  exportAsCSV(data) {
-    if (data.length === 0) {
-      showAlert("No data to export", "warning");
-      return;
-    }
-
-    // Define CSV columns and their data sources
-    const columns = [
-      { header: "ANN ID", getValue: row => row.annId || "" },
-      { header: "Anime", getValue: row => this.getAnimeTitle(row) },
-      { header: "Type", getValue: row => row.songType || "" },
-      { header: "Song", getValue: row => row.songName || "" },
-      { header: "Artist", getValue: row => row.songArtist || "" },
-      { header: "Vintage", getValue: row => row.animeVintage || "" },
-      { header: "Difficulty", getValue: row => row.songDifficulty || "" },
-      { header: "Category", getValue: row => row.songCategory || "" },
-      { header: "Broadcast", getValue: row => broadcastText(row) },
-      { header: "Length", getValue: row => this.formatDurationSeconds(row.songLength) },
-      { header: "Composer", getValue: row => row.songComposer || "" },
-      { header: "Arranger", getValue: row => row.songArranger || "" },
-      { header: "ANN Song ID", getValue: row => row.annSongId || "" },
-      { header: "AMQ Song ID", getValue: row => row.amqSongId || "" },
-      { header: "Anilist ID", getValue: row => (row.linked_ids?.anilist || "") },
-      { header: "MAL ID", getValue: row => (row.linked_ids?.myanimelist || "") },
-      { header: "Kitsu ID", getValue: row => (row.linked_ids?.kitsu || "") },
-      { header: "AniDB ID", getValue: row => (row.linked_ids?.anidb || "") },
-      { header: "720p", getValue: row => row.HQ || "" },
-      { header: "480p", getValue: row => row.MQ || "" },
-      { header: "MP3", getValue: row => row.audio || "" }
-    ];
-
-    // Create CSV content
-    const csvRows = [];
-
-    // Add header row
-    csvRows.push(columns.map(col => `"${col.header}"`).join(","));
-
-    // Add data rows
-    data.forEach((row, index) => {
-      const values = columns.map(col => {
-        const value = col.getValue(row, index);
-        // Escape quotes and wrap in quotes
-        return `"${String(value).replace(/"/g, '""')}"`;
-      });
-      csvRows.push(values.join(","));
-    });
-
-    const csvContent = csvRows.join("\n");
-    const filename = this.makeDownloadFilename("csv");
-    this.downloadFile(csvContent, filename, "text/csv");
-  }
-
-  // Generate a filename for downloads based on current search parameters
-  makeDownloadFilename(extension = "json") {
-    if (settingsManager.get("searchMode") === "advanced") {
-      // Advanced search mode - combine all 4 inputs
-      const anime = $("#searchAnime").val().trim();
-      const artist = $("#searchArtist").val().trim();
-      const song = $("#searchSong").val().trim();
-      const composer = $("#searchComposer").val().trim();
-
-      // Combine all non-empty values with a separator
-      const parts = [anime, artist, song, composer].filter(Boolean);
-      if (parts.length === 0) return `download.${extension}`;
-
-      const combined = parts.join(" ");
-      const safe = combined.replace(/[^a-z0-9 _.-]+/gi, "");
-      return (safe || "download") + `.${extension}`;
-    } else {
-      // Simple search mode - use search query
-      const q = (($("#searchQuery").val() || "")).trim();
-      if (!q) return `download.${extension}`;
-      const safe = q.replace(/[^a-z0-9 _.-]+/gi, "");
-      return (safe || "download") + `.${extension}`;
-    }
-  }
-
-  // Download a file with the specified content, filename, and MIME type
-  downloadFile(content, filename, mimeType) {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  // Handle JSON file uploads for importing data
+  // Handle file uploads (JSON or CSV) for importing data
   async onUploadJson(evt) {
     const f = evt.target.files?.[0];
     evt.target.value = ""; // reset
     if (!f) return;
     try {
       const text = await f.text();
-      const parsed = JSON.parse(text);
-      if (!Array.isArray(parsed)) throw new Error("Uploaded JSON must be an array of rows.");
-
-      this.loadData(parsed);
+      const rows = ioManager.parseFileText({ name: f.name, type: f.type }, text);
+      this.loadData(rows);
     } catch (err) { showAlert(`Upload failed: ${err.message || err}`, "danger"); }
   }
 
@@ -516,16 +411,6 @@ class TableManager {
     return (settingsManager.get("language") === "romaji")
       ? (row.animeJPName || row.animeENName || "")
       : (row.animeENName || row.animeJPName || "");
-  }
-
-  // Format duration in seconds to MM:SS display format
-  formatDurationSeconds(sec) {
-    const n = Number(sec);
-    if (!Number.isFinite(n) || n <= 0) return "";
-    const m = Math.floor(n / 60);
-    const s = Math.round(n - m * 60);
-    const ss = String(s).padStart(2, "0");
-    return `${m}:${ss}`;
   }
 
   // Optimized method for language changes - updates only anime titles without full re-render
