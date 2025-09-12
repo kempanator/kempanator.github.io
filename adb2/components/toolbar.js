@@ -1,31 +1,62 @@
 class Toolbar {
+  // Initialize toolbar and cache DOM references
   constructor() {
-    this.$btnSearch = $("#btnSearch");
+    // header buttons
+    this.$btnPrevSong = $("#btnPrevSong");
+    this.$btnNextSong = $("#btnNextSong");
+    // Query Inputs
     this.$searchQuery = $("#searchQuery");
     this.$searchAnime = $("#searchAnime");
     this.$searchArtist = $("#searchArtist");
     this.$searchSong = $("#searchSong");
     this.$searchComposer = $("#searchComposer");
+    this.$simpleSearchMode = $("#simpleSearchMode");
+    this.$advancedSearchMode = $("#advancedSearchMode");
+    // Buttons
+    this.$btnSearch = $("#btnSearch");
     this.$searchScope = $("#searchScope");
     this.$btnFilters = $("#btnFilters");
     this.$btnTable = $("#btnTable");
+    // Data Dropdown
     this.$btnExportCSV = $("#btnExportCSV");
     this.$btnExportJSON = $("#btnExportJSON");
     this.$btnImportFile = $("#btnImportFile");
     this.$songListFileInput = $("#songListFileInput");
-    this.$btnPrevSong = $("#btnPrevSong");
-    this.$btnNextSong = $("#btnNextSong");
+    // Request Filters
+    this.$chkPartial = $("#chkPartial");
+    this.$chkMatchCase = $("#chkMatchCase");
+    this.$chkArrangement = $("#chkArrangement");
+    this.$chkOP = $("#chkOP");
+    this.$chkED = $("#chkED");
+    this.$chkIN = $("#chkIN");
+    this.$inpMaxOther = $("#inpMaxOther");
+    this.$inpGroupMin = $("#inpGroupMin");
+    this.$selFilterType = $("#selFilterType");
+    this.$chkIgnoreDup = $("#chkIgnoreDup");
+    this.$chkNormal = $("#chkNormal");
+    this.$chkDub = $("#chkDub");
+    this.$chkRebroadcast = $("#chkRebroadcast");
+    this.$chkStandard = $("#chkStandard");
+    this.$chkCharacter = $("#chkCharacter");
+    this.$chkChanting = $("#chkChanting");
+    this.$chkInstrumental = $("#chkInstrumental");
+    // Table Operations
     this.$btnShuffle = $("#btnShuffle");
     this.$btnReverse = $("#btnReverse");
     this.$btnClearTable = $("#btnClearTable");
     this.$btnSearchMode = $("#btnSearchMode");
     this.$resultMode = $("#resultMode");
-    this.$simpleSearchMode = $("#simpleSearchMode");
-    this.$advancedSearchMode = $("#advancedSearchMode");
-    this.$selFilterType = $("#selFilterType");
+    // Client Filters
+    this.$cfAction = $("#cfAction");
+    this.$cfField = $("#cfField");
+    this.$cfQuery = $("#cfQuery");
+    this.$cfPartial = $("#cfPartial");
+    this.$cfMatchCase = $("#cfMatchCase");
+    this.$btnApplyClientFilter = $("#btnApplyClientFilter");
     this.wireEvents();
   }
 
+  // Wire UI events and global event handlers
   wireEvents() {
     // Search UI wiring: trigger submit and manage placeholders
     this.$btnSearch.on("click", () => eventBus.emit("search:submit"));
@@ -34,7 +65,6 @@ class Toolbar {
     this.$searchArtist.on("keydown", e => { if (e.key === "Enter") eventBus.emit("search:submit"); });
     this.$searchSong.on("keydown", e => { if (e.key === "Enter") eventBus.emit("search:submit"); });
     this.$searchComposer.on("keydown", e => { if (e.key === "Enter") eventBus.emit("search:submit"); });
-
     this.$searchScope.on("change", () => this.updateScopePlaceholder());
     this.updateScopePlaceholder();
     // React to searchMode changes (settings:changed event)
@@ -58,6 +88,10 @@ class Toolbar {
     this.$btnReverse.on("click", () => eventBus.emit("table:reverse"));
     this.$btnClearTable.on("click", () => eventBus.emit("table:clear"));
 
+    // Client filter apply
+    this.$btnApplyClientFilter.on("click", () => this.applyClientFilterFromUI());
+    this.$cfQuery.on("keydown", (e) => { if (e.key === "Enter") this.applyClientFilterFromUI(); });
+
     // Search mode toggle
     this.$btnSearchMode.on("click", () => {
       const isSimple = settingsManager.get("searchMode") === "simple";
@@ -75,6 +109,48 @@ class Toolbar {
     });
   }
 
+  // Read current search input values
+  getSearchInputs() {
+    const mode = settingsManager.get("searchMode");
+    if (mode === "advanced") {
+      return {
+        anime: String(this.$searchAnime.val() || "").trim(),
+        artist: String(this.$searchArtist.val() || "").trim(),
+        song: String(this.$searchSong.val() || "").trim(),
+        composer: String(this.$searchComposer.val() || "").trim()
+      };
+    }
+    return {
+      scope: this.$searchScope.val(),
+      query: String(this.$searchQuery.val() || "").trim()
+    };
+  }
+
+  // Read toggle states for building search payloads
+  getToggleStates() {
+    const isAdvanced = settingsManager.get("searchMode") === "advanced";
+    return {
+      partial_match: this.$chkPartial.is(":checked"),
+      match_case: this.$chkMatchCase.is(":checked"),
+      arrangement: this.$chkArrangement.is(":checked"),
+      opening_filter: this.$chkOP.is(":checked"),
+      ending_filter: this.$chkED.is(":checked"),
+      insert_filter: this.$chkIN.is(":checked"),
+      max_other_artist: parseInt(this.$inpMaxOther.val(), 10) || 0,
+      group_granularity: parseInt(this.$inpGroupMin.val(), 10) || 0,
+      and_logic: isAdvanced ? this.$selFilterType.val() === "intersection" : false,
+      ignore_duplicate: this.$chkIgnoreDup.is(":checked"),
+      normal_broadcast: this.$chkNormal.is(":checked"),
+      dub: this.$chkDub.is(":checked"),
+      rebroadcast: this.$chkRebroadcast.is(":checked"),
+      standard: this.$chkStandard.is(":checked"),
+      character: this.$chkCharacter.is(":checked"),
+      chanting: this.$chkChanting.is(":checked"),
+      instrumental: this.$chkInstrumental.is(":checked")
+    };
+  }
+
+  // Switch UI between simple and advanced search modes
   applySearchModeUI(mode) {
     const isAdvanced = mode === "advanced";
     if (isAdvanced) {
@@ -92,10 +168,24 @@ class Toolbar {
     }
   }
 
+  // Get the current result mode ("new" or "append")
   getResultMode() {
     return appState.getStateSlice("ui.resultMode") || "new";
   }
 
+  // Emit client filter payload from UI controls
+  applyClientFilterFromUI() {
+    const payload = {
+      action: this.$cfAction.val(),
+      field: this.$cfField.val(),
+      query: String(this.$cfQuery.val() || ""),
+      partial: this.$cfPartial.is(":checked"),
+      match_case: this.$cfMatchCase.is(":checked")
+    };
+    eventBus.emit("table:client-filter-apply", payload);
+  }
+
+  // Update placeholder for the simple search input based on scope
   updateScopePlaceholder() {
     const scope = this.$searchScope.val();
     const placeholderMap = {

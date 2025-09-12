@@ -60,6 +60,8 @@ class TableComponent {
     this.renderTable();
     this.renderCards();
     this.updateResultsCount();
+    this.markPlaying();
+    this.markExistingInPlaylist(playlistManager.autoAddPlaylistId);
   }
 
   // Render the table view with sorted rows and column settings

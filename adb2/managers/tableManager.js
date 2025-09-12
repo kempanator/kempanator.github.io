@@ -68,6 +68,11 @@ class TableManager {
       eventBus.emit("table:sort", { column: col, element: e.target });
     });
 
+    // Client filter apply: operate on visible rows and update removedKeys
+    eventBus.on("table:client-filter-apply", (payload) => {
+      this.applyClientFilter(payload);
+    });
+
     // React to settings changes
     eventBus.on("settings:language-changed", () => {
       this.syncLanguageChange();
@@ -79,18 +84,10 @@ class TableManager {
     // React to row reorder events from the table component
     eventBus.on("table:reordered", ({ order }) => {
       const songs = appState.getStateSlice("songs");
-      const currentOrder = (songs.visible || []).map(r => this.rowKey(r));
-      const sameOrder = order.length === currentOrder.length && order.every((k, i) => k === currentOrder[i]);
-      if (sameOrder) {
-        return;
-      }
-
       const newVisible = [...songs.visible].sort((a, b) => order.indexOf(this.rowKey(a)) - order.indexOf(this.rowKey(b)));
       appState.updateStateSlice("songs.visible", () => newVisible);
       appState.updateStateSlice("table.manualOrderActive", () => true);
       this.table.render();
-      this.table.markPlaying();
-      this.table.markExistingInPlaylist(playlistManager.autoAddPlaylistId);
     });
 
     // Subscribe to state changes
@@ -144,8 +141,6 @@ class TableManager {
     this.tableState.sort = { column: null, dir: null };
 
     this.table.setData(this.state.visible);
-    this.table.markPlaying();
-    this.table.markExistingInPlaylist(playlistManager.autoAddPlaylistId);
   }
 
   // Append new data to the existing table data
@@ -173,8 +168,6 @@ class TableManager {
     });
 
     this.table.render();
-    this.table.markPlaying();
-    this.table.markExistingInPlaylist(playlistManager.autoAddPlaylistId);
   }
 
   // Clear all data from the table and reset state
@@ -198,116 +191,71 @@ class TableManager {
     this.table.render();
   }
 
-  // Apply client-side filtering to the visible data
-  applyFilters(filters) {
-    // Apply client-side filtering
-    const filteredData = this.applyClientSideFiltering(this.state.visible, filters);
+  // Apply client-side filter permanently to visible rows
+  applyClientFilter({ action, field, query, partial, match_case }) {
+    // Normalize parameters
+    const desiredAction = String(action || "keep").toLowerCase(); // "keep" | "remove"
+    const scope = String(field || "Anime"); // Anime | Artist | Song | Composer | Season
+    const termRaw = String(query || "");
+    const isPartial = Boolean(partial);
+    const isCaseSensitive = Boolean(match_case);
 
-    // Update AppState
-    appState.updateStateSlice("songs.visible", () => filteredData);
+    // Build matcher according to settings
+    const normalize = (s) => (isCaseSensitive ? String(s ?? "") : String(s ?? "").toLowerCase());
+    const term = normalize(termRaw);
 
-    // Update local references
-    this.state.visible = filteredData;
+    const getFieldValue = (row) => {
+      switch (scope) {
+        case "Anime":
+          return this.getAnimeTitle(row);
+        case "Artist":
+          return row.songArtist || "";
+        case "Song":
+          return row.songName || "";
+        case "Composer":
+          return row.songComposer || "";
+        case "Season":
+          return row.animeVintage || "";
+        default:
+          return "";
+      }
+    };
 
-    this.table.setData(this.state.visible);
-  }
+    const matches = (row) => {
+      const value = normalize(getFieldValue(row));
+      if (!isPartial) {
+        return value === term;
+      }
+      return value.includes(term);
+    };
 
-  // Apply client-side filtering based on search terms and match case setting
-  applyClientSideFiltering(rows, t) {
-    if (!Array.isArray(rows)) return rows;
-
-    // If match case is not enabled, return original results
-    if (!t.match_case) return rows;
-
-    // Get search terms from the current search inputs
-    const searchTerms = [];
-
-    if (settingsManager.get("searchMode") === "advanced") {
-      // Advanced search mode - get from individual fields
-      const anime = $("#searchAnime").val().trim();
-      const artist = $("#searchArtist").val().trim();
-      const song = $("#searchSong").val().trim();
-      const composer = $("#searchComposer").val().trim();
-
-      if (anime) searchTerms.push({ field: "anime", term: anime });
-      if (artist) searchTerms.push({ field: "artist", term: artist });
-      if (song) searchTerms.push({ field: "song", term: song });
-      if (composer) searchTerms.push({ field: "composer", term: composer });
-    } else {
-      // Simple search mode - get from main search query
-      const query = $("#searchQuery").val().trim();
-      const scope = $("#searchScope").val();
-
-      if (query) {
-        if (scope === "All") {
-          // For "All" scope, search across multiple fields
-          searchTerms.push({ field: "anime", term: query });
-          searchTerms.push({ field: "artist", term: query });
-          searchTerms.push({ field: "song", term: query });
-          searchTerms.push({ field: "composer", term: query });
-        } else {
-          searchTerms.push({ field: scope.toLowerCase(), term: query });
-        }
+    // Compute which rows to remove from visible
+    const currentVisible = this.state.visible;
+    const toRemove = [];
+    for (let i = 0; i < currentVisible.length; i++) {
+      const row = currentVisible[i];
+      const doesMatch = matches(row);
+      if ((desiredAction === "keep" && !doesMatch) || (desiredAction === "remove" && doesMatch)) {
+        toRemove.push(this.rowKey(row));
       }
     }
 
-    // If no search terms, return original results
-    if (searchTerms.length === 0) return rows;
+    if (toRemove.length === 0) {
+      return;
+    }
 
-    return rows.filter(row => {
-      // For "All" scope, we need to check if ANY field matches
-      if (searchTerms.length > 0 && searchTerms.every(st => ["anime", "artist", "song", "composer"].includes(st.field))) {
-        // This is an "All" scope search - check if ANY field matches
-        return searchTerms.some(({ field, term }) => {
-          let fieldValue = "";
+    // Update removedKeys and visible
+    const newRemovedKeys = new Set(this.state.removedKeys);
+    toRemove.forEach(k => newRemovedKeys.add(k));
+    const newVisible = currentVisible.filter(r => !newRemovedKeys.has(this.rowKey(r)));
 
-          switch (field) {
-            case "anime":
-              fieldValue = (row.animeENName || row.animeJPName || "").toString();
-              break;
-            case "artist":
-              fieldValue = (row.songArtist || "").toString();
-              break;
-            case "song":
-              fieldValue = (row.songName || "").toString();
-              break;
-            case "composer":
-              fieldValue = (row.songComposer || "").toString();
-              break;
-            default:
-              return false;
-          }
+    appState.updateStateSlice("songs.removedKeys", () => newRemovedKeys);
+    appState.updateStateSlice("songs.visible", () => newVisible);
 
-          // Case-sensitive matching
-          return fieldValue.includes(term);
-        });
-      } else {
-        // Regular scope search - check if ALL terms match
-        return searchTerms.every(({ field, term }) => {
-          let fieldValue = "";
+    this.state.removedKeys = newRemovedKeys;
+    this.state.visible = newVisible;
 
-          switch (field) {
-            case "anime":
-              fieldValue = (row.animeENName || row.animeJPName || "").toString();
-              break;
-            case "artist":
-              fieldValue = (row.songArtist || "").toString();
-              break;
-            case "song":
-              fieldValue = (row.songName || "").toString();
-              break;
-            case "composer":
-              fieldValue = (row.songComposer || "").toString();
-              break;
-            default:
-              return true; // Skip filtering for unknown fields
-          }
-
-          // Case-sensitive matching
-          return fieldValue.includes(term);
-        });
-      }
-    });
+    this.table.setData(this.state.visible);
   }
 
   // Shuffle the table rows and update state to match
@@ -334,10 +282,6 @@ class TableManager {
 
     // Re-render the table with the new order
     this.table.setData(this.state.visible);
-
-    // Update UI indicators for current playing and playlists
-    this.table.markPlaying();
-    this.table.markExistingInPlaylist(playlistManager.autoAddPlaylistId);
   }
 
   // Reverse the table rows and update state to match
@@ -358,16 +302,16 @@ class TableManager {
 
     // Re-render the table with the new order
     this.table.setData(this.state.visible);
-
-    // Update UI indicators for current playing and playlists
-    this.table.markPlaying();
-    this.table.markExistingInPlaylist(playlistManager.autoAddPlaylistId);
   }
 
   // Export table data in the specified format (csv or json)
   export(format) {
     const data = this.table.getVisibleData();
-    ioManager.export(data, format);
+    if (format === "csv") {
+      ioManager.exportAsCSV(data);
+    } else if (format === "json") {
+      ioManager.exportAsJSON(data);
+    }
   }
 
   // Handle file uploads (JSON or CSV) for importing data

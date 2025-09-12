@@ -29,12 +29,39 @@ class InfoModal {
       event.preventDefault();
       const scope = event.target.dataset.scope;
       const searchTerm = event.target.dataset.search;
-      if (searchTerm) {
-        $("#searchScope").val(scope);
-        $("#searchQuery").val(searchTerm);
-        this.$modal.modal("hide");
-        eventBus.emit("search:submit");
-      }
+      if (!searchTerm) return;
+
+      // Build authoritative payload with all toggles and force new-table behavior
+      const payload = {
+        scope: scope,
+        query: String(searchTerm),
+        result_mode: "new",
+        // Text search options
+        partial_match: false,
+        match_case: false,
+        arrangement: true,
+        // Song type filters (false => include all types)
+        opening_filter: true,
+        ending_filter: true,
+        insert_filter: true,
+        // Artist grouping
+        max_other_artist: 99,
+        group_granularity: 0,
+        and_logic: false,
+        // Duplicates and broadcast filters
+        ignore_duplicate: false,
+        normal_broadcast: true,
+        dub: true,
+        rebroadcast: true,
+        // Category filters
+        standard: true,
+        character: true,
+        chanting: true,
+        instrumental: true
+      };
+
+      this.$modal.modal("hide");
+      eventBus.emit("search:submit", payload);
     });
   }
 

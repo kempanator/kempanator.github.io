@@ -21,36 +21,58 @@ class SearchManager {
       return;
     }
 
-    const mode = appState.getStateSlice("ui.resultMode") || "new";
-    const isAppend = mode === "append";
-
-    // Reset state for new searches
-    if (!isAppend) {
-      appState.updateStateSlice("songs.removedKeys", () => new Set());
-      appState.updateStateSlice("table.manualOrderActive", () => false);
-      appState.updateStateSlice("table.sort.column", () => null);
-      appState.updateStateSlice("table.sort.dir", () => null);
-    }
-
     // Abort any ongoing request
     this.abortCurrentRequest();
     this.currentAborter = new AbortController();
 
-    const toggles = this.readToggles();
+    // If payload provided, treat it as authoritative and do NOT read toolbar
+    if (payload && Object.keys(payload).length > 0) {
+      const toggleKeys = [
+        "partial_match", "match_case", "arrangement",
+        "opening_filter", "ending_filter", "insert_filter",
+        "max_other_artist", "group_granularity", "and_logic",
+        "ignore_duplicate", "normal_broadcast", "dub", "rebroadcast",
+        "standard", "character", "chanting", "instrumental"
+      ];
+      // Respect result mode in payload if present
+      const isAppend = payload.result_mode === "append";
+      if (!isAppend) this.newTableResetState();
+      const authoritativeToggles = this.pickKeys(payload, toggleKeys);
 
-    if (settingsManager.get("searchMode") === "advanced") {
-      this.performAdvancedSearch(isAppend, toggles);
+      if (payload.scope && payload.query) {
+        const authoritativeInputs = this.pickKeys(payload, ["scope", "query"]);
+        this.performSimpleSearch(isAppend, authoritativeToggles, authoritativeInputs);
+      }
+      else if (payload.anime || payload.artist || payload.song || payload.composer) {
+        const authoritativeInputs = this.pickKeys(payload, ["anime", "artist", "song", "composer"]);
+        this.performAdvancedSearch(isAppend, authoritativeToggles, authoritativeInputs);
+      }
+      else {
+        console.log("Invalid search payload.", payload);
+        showAlert("Invalid search payload.", "danger");
+      }
+      return;
+    }
+
+    // No payload → fall back to toolbar state
+    const isAdvanced = settingsManager.get("searchMode") === "advanced";
+    const isAppend = appState.getStateSlice("ui.resultMode") === "append";
+    if (!isAppend) this.newTableResetState();
+    const baseInputs = toolbar.getSearchInputs();
+    const baseToggles = toolbar.getToggleStates();
+    if (isAdvanced) {
+      this.performAdvancedSearch(isAppend, baseToggles, baseInputs);
     } else {
-      this.performSimpleSearch(isAppend, toggles);
+      this.performSimpleSearch(isAppend, baseToggles, baseInputs);
     }
   }
 
   // Performs advanced search with individual field inputs
-  performAdvancedSearch(isAppend, toggles) {
-    const anime = $("#searchAnime").val().trim();
-    const artist = $("#searchArtist").val().trim();
-    const song = $("#searchSong").val().trim();
-    const composer = $("#searchComposer").val().trim();
+  performAdvancedSearch(isAppend, toggles, inputs) {
+    const anime = String(inputs?.anime || "").trim();
+    const artist = String(inputs?.artist || "").trim();
+    const song = String(inputs?.song || "").trim();
+    const composer = String(inputs?.composer || "").trim();
 
     // Check if at least one field has content
     if (!anime && !artist && !song && !composer) {
@@ -59,13 +81,13 @@ class SearchManager {
     }
 
     const body = this.buildAdvancedSearchBody(anime, artist, song, composer, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/search_request`, body, isAppend);
+    this.makeSearchRequest(`${API_BASE}/api/search_request`, body, isAppend, Boolean(toggles.match_case));
   }
 
   // Performs simple search based on scope and query
-  performSimpleSearch(isAppend, toggles) {
-    const scope = $("#searchScope").val();
-    const query = $("#searchQuery").val().trim();
+  performSimpleSearch(isAppend, toggles, inputs) {
+    const scope = String(inputs?.scope || "All");
+    const query = String(inputs?.query || "").trim();
 
     if (scope === "Season") {
       this.handleSeasonSearch(query, isAppend, toggles);
@@ -80,7 +102,8 @@ class SearchManager {
     } else {
       // All/Anime/Artist/Song/Composer => search_request
       const body = this.buildSearchBody(scope, query, toggles);
-      this.makeSearchRequest(`${API_BASE}/api/search_request`, body, isAppend);
+      const allowMatchCase = ["All", "Anime", "Artist", "Song", "Composer"].includes(scope);
+      this.makeSearchRequest(`${API_BASE}/api/search_request`, body, isAppend, allowMatchCase && Boolean(toggles.match_case));
     }
   }
 
@@ -93,7 +116,7 @@ class SearchManager {
     }
 
     const body = this.buildSeasonBody(seasonStr, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/season_request`, body, isAppend);
+    this.makeSearchRequest(`${API_BASE}/api/season_request`, body, isAppend, false);
   }
 
   // Handles ANN ID search
@@ -102,7 +125,7 @@ class SearchManager {
     if (!ids) return;
 
     const body = this.buildAnnBody(ids, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/ann_ids_request`, body, isAppend);
+    this.makeSearchRequest(`${API_BASE}/api/ann_ids_request`, body, isAppend, false);
   }
 
   // Handles ANN Song ID search
@@ -111,7 +134,7 @@ class SearchManager {
     if (!ids) return;
 
     const body = this.buildAnnSongIdsBody(ids, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/ann_song_ids_request`, body, isAppend);
+    this.makeSearchRequest(`${API_BASE}/api/ann_song_ids_request`, body, isAppend, false);
   }
 
   // Handles AMQ Song ID search
@@ -120,7 +143,7 @@ class SearchManager {
     if (!ids) return;
 
     const body = this.buildAmqSongIdsBody(ids, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/amq_song_ids_request`, body, isAppend);
+    this.makeSearchRequest(`${API_BASE}/api/amq_song_ids_request`, body, isAppend, false);
   }
 
   // Handles MAL ID search
@@ -129,7 +152,7 @@ class SearchManager {
     if (!ids) return;
 
     const body = this.buildMalBody(ids, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/mal_ids_request`, body, isAppend);
+    this.makeSearchRequest(`${API_BASE}/api/mal_ids_request`, body, isAppend, false);
   }
 
   // Parses a comma-separated list of IDs
@@ -149,20 +172,75 @@ class SearchManager {
     return ids.map(Number);
   }
 
-  // Makes a search request to the API
-  makeSearchRequest(url, body, isAppend) {
+  // Makes a search request to the API and applies client-side case filtering if needed
+  makeSearchRequest(url, body, isAppend, matchCase) {
     this.setLoading(true);
     this.postJson(url, body)
       .then(data => {
         const sortedByType = this.sortBySongType(data);
+        const searchTerms = this.extractTextSearchTermsFromBody(body);
+        const finalRows = matchCase && searchTerms.length > 0
+          ? this.filterCaseSensitiveForTextScopes(sortedByType, searchTerms)
+          : sortedByType;
         if (isAppend) {
-          tableManager.appendData(sortedByType);
+          tableManager.appendData(finalRows);
         } else {
-          tableManager.loadData(sortedByType);
+          tableManager.loadData(finalRows);
         }
       })
       .catch(err => this.onFetchError(err))
       .finally(() => this.setLoading(false));
+  }
+
+  // Derive text search terms from the request body for client-side case filtering
+  extractTextSearchTermsFromBody(body) {
+    const terms = [];
+    if (!body || typeof body !== "object") return terms;
+    const anime = body.anime_search_filter?.search;
+    const artist = body.artist_search_filter?.search;
+    const song = body.song_name_search_filter?.search;
+    const composer = body.composer_search_filter?.search;
+    if (anime) terms.push({ field: "anime", term: String(anime) });
+    if (artist) terms.push({ field: "artist", term: String(artist) });
+    if (song) terms.push({ field: "song", term: String(song) });
+    if (composer) terms.push({ field: "composer", term: String(composer) });
+    return terms;
+  }
+
+  // Apply case-sensitive filtering for text scopes (Anime/Artist/Song/Composer/All)
+  filterCaseSensitiveForTextScopes(rows, searchTerms) {
+    if (!Array.isArray(rows)) return rows;
+    if (searchTerms.length === 0) return rows;
+
+    return rows.filter(row => {
+      const matchesField = ({ field, term }) => {
+        let fieldValue = "";
+        switch (field) {
+          case "anime":
+            fieldValue = (row.animeENName || row.animeJPName || "").toString();
+            break;
+          case "artist":
+            fieldValue = (row.songArtist || "").toString();
+            break;
+          case "song":
+            fieldValue = (row.songName || "").toString();
+            break;
+          case "composer":
+            fieldValue = (row.songComposer || "").toString();
+            break;
+          default:
+            return false;
+        }
+        return fieldValue.includes(term);
+      };
+
+      // If terms span only the text fields (All), allow any to match; else require all
+      const onlyTextFields = searchTerms.every(st => ["anime", "artist", "song", "composer"].includes(st.field));
+      if (onlyTextFields && searchTerms.length > 1) {
+        return searchTerms.some(matchesField);
+      }
+      return searchTerms.every(matchesField);
+    });
   }
 
   // Aborts the current search request
@@ -173,38 +251,13 @@ class SearchManager {
     }
   }
 
-  // Reads all filter toggle states from the UI and returns as an object
-  readToggles() {
-    return {
-      partial_match: $("#chkPartial").is(":checked"),
-      match_case: $("#chkMatchCase").is(":checked"),
-      arrangement: $("#chkArrangement").is(":checked"),
-      opening_filter: $("#chkOP").is(":checked"),
-      ending_filter: $("#chkED").is(":checked"),
-      insert_filter: $("#chkIN").is(":checked"),
-      max_other_artist: parseInt($("#inpMaxOther").val(), 10) || 0,
-      group_granularity: parseInt($("#inpGroupMin").val(), 10) || 0,
-      and_logic: settingsManager.get("searchMode") === "advanced" ? $("#selFilterType").val() === "intersection" : false,
-      ignore_duplicate: $("#chkIgnoreDup").is(":checked"),
-      normal_broadcast: $("#chkNormal").is(":checked"),
-      dub: $("#chkDub").is(":checked"),
-      rebroadcast: $("#chkRebroadcast").is(":checked"),
-      standard: $("#chkStandard").is(":checked"),
-      character: $("#chkCharacter").is(":checked"),
-      chanting: $("#chkChanting").is(":checked"),
-      instrumental: $("#chkInstrumental").is(":checked")
-    };
-  }
-
   // Builds the request body for simple search mode
   buildSearchBody(scope, query, toggles) {
     const base = this.buildBaseBody(toggles);
 
     const anime = {
       search: query,
-      partial_match: toggles.partial_match,
-      group_granularity: toggles.group_granularity,
-      max_other_artist: toggles.max_other_artist
+      partial_match: toggles.partial_match
     };
     const song = {
       search: query,
@@ -252,9 +305,7 @@ class SearchManager {
     if (anime && anime.trim()) {
       result.anime_search_filter = {
         search: anime,
-        partial_match: toggles.partial_match,
-        group_granularity: toggles.group_granularity,
-        max_other_artist: toggles.max_other_artist
+        partial_match: toggles.partial_match
       };
     }
 
@@ -441,6 +492,24 @@ class SearchManager {
     const detail = err?.response?.detail ?? err?.response?.message ?? err?.detail ?? err?.message ?? String(err);
     console.error("Fetch error:", err);
     showAlert(`Request failed: ${detail}`, "danger");
+  }
+
+  // Reset the state for a new table
+  newTableResetState() {
+    appState.updateStateSlice("songs.removedKeys", () => new Set());
+    appState.updateStateSlice("table.manualOrderActive", () => false);
+    appState.updateStateSlice("table.sort.column", () => null);
+    appState.updateStateSlice("table.sort.dir", () => null);
+  }
+
+  // Utility: pick only allowed keys from an object, ignoring undefined
+  pickKeys(obj, keys) {
+    const out = {};
+    if (!obj) return out;
+    keys.forEach(k => {
+      if (obj[k] !== undefined) out[k] = obj[k];
+    });
+    return out;
   }
 }
 

@@ -1,12 +1,6 @@
 class IOManager {
-  export(data, format) {
-    if (format === "csv") {
-      this.exportAsCSV(data);
-    } else if (format === "json") {
-      this.exportAsJSON(data);
-    }
-  }
 
+  // Export visible table data as JSON file
   exportAsJSON(data) {
     if (!Array.isArray(data) || data.length === 0) {
       showAlert("No data to export", "warning");
@@ -18,6 +12,7 @@ class IOManager {
     this.downloadFile(content, filename, "application/json");
   }
 
+  // Export visible table data as CSV file
   exportAsCSV(data) {
     if (!Array.isArray(data) || data.length === 0) {
       showAlert("No data to export", "warning");
@@ -67,6 +62,7 @@ class IOManager {
     this.downloadFile(csvContent, filename, "text/csv");
   }
 
+  // Build a sanitized download filename from current search inputs
   makeDownloadFilename(extension = "json") {
     if (settingsManager.get("searchMode") === "advanced") {
       const anime = $("#searchAnime").val().trim();
@@ -86,6 +82,7 @@ class IOManager {
     }
   }
 
+  // Trigger a browser download for the given content
   downloadFile(content, filename, mimeType) {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -98,7 +95,7 @@ class IOManager {
     URL.revokeObjectURL(url);
   }
 
-  // Detect type by file meta then parse to normalized rows
+  // Parse uploaded file text into normalized rows
   parseFileText(fileMeta, text) {
     const name = String(fileMeta?.name || "").toLowerCase();
     const type = String(fileMeta?.type || "").toLowerCase();
@@ -107,7 +104,7 @@ class IOManager {
     if (name.endsWith(".csv") || type.includes("csv")) {
       return this.parseCsvToRows(text);
     }
-    
+
     // Parse JSON, support multiple JSON shapes
     const parsed = JSON.parse(text);
     if (Array.isArray(parsed)) {
@@ -124,7 +121,7 @@ class IOManager {
     throw new Error("Uploaded JSON must be an array of rows or an object with a songs array.");
   }
 
-  // CSV → rows mapping compatible with this app (matches export columns above)
+  // Convert CSV text into normalized row objects
   parseCsvToRows(text) {
     const records = this.csvParse(text);
     if (records.length === 0) return [];
@@ -215,7 +212,7 @@ class IOManager {
     return rows.filter(r => r.length && !(r.length === 1 && r[0] === ""));
   }
 
-  // Parse CSV length string to seconds
+  // Parse CSV length column data (MM:SS) to seconds (number)
   parseCsvLength(s) {
     const m = String(s || "").trim().match(/^(\d+):(\d{2})$/);
     if (!m) return "";
@@ -231,7 +228,7 @@ class IOManager {
     return Number.isFinite(n) ? n : (String(v || "").trim() || "");
   }
 
-  // Map AMQ-like schema song entry to our table row
+  // Map various song schemas to a normalized row
   mapSongToRow(entry) {
     if (!entry || typeof entry !== "object") return null;
 
@@ -239,6 +236,7 @@ class IOManager {
       annId: entry.annId ?? entry.siteIds?.annId ?? entry.songInfo?.siteIds?.annId ?? null,
       animeENName: entry.animeENName ?? entry.animeEnglishName ?? entry.songInfo?.animeNames?.english ?? entry.anime?.english ?? entry.animeEnglish ?? entry.animeEng ?? "",
       animeJPName: entry.animeJPName ?? entry.animeRomajiName ?? entry.songInfo?.animeNames?.romaji ?? entry.anime?.romaji ?? entry.animeRomaji ?? entry.animeRom ?? "",
+      animeAltName: entry.animeAltName ?? null,
       animeType: entry.animeType ?? entry.songInfo?.animeType ?? "",
       animeCategory: entry.animeCategory ?? "",
       animeVintage: entry.animeVintage ?? entry.vintage ?? entry.songInfo?.vintage ?? "",
@@ -265,11 +263,12 @@ class IOManager {
       audio: entry.audio ?? entry.videoUrl ?? entry.urls?.catbox?.[0] ?? entry.songInfo?.videoTargetMap?.catbox?.[0] ?? entry.songInfo?.urlMap?.catbox?.[0] ?? entry.LinkMp3 ?? ""
     };
     if (typeof row.songType === "number") {
-      row.songType = this.mapTypeCodeToText(entry.songType ?? entry.songInfo?.type, entry.songTypeNumber ?? entry.songInfo?.typeNumber);
+      row.songType = this.mapTypeCodeToText(row.songType, entry.songTypeNumber ?? entry.songInfo?.typeNumber);
     }
     return row;
   }
 
+  // Convert numeric type code/number to human-readable text
   mapTypeCodeToText(typeCode, typeNumber) {
     let base = "";
     if (typeCode === 1) base = "Opening";
