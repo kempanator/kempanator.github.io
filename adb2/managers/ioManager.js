@@ -111,7 +111,7 @@ class IOManager {
       return parsed.map(s => this.mapSongToRow(s)).filter(Boolean);
     }
     if (parsed && typeof parsed === "object") {
-      if (parsed.songs) { // official AMQ format
+      if (parsed.songs) { // Official AMQ format
         return parsed.songs.map(s => this.mapSongToRow(s)).filter(Boolean);
       }
       if (parsed.songHistory) { // Answer Stats script format

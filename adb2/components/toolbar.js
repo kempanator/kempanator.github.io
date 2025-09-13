@@ -1,7 +1,7 @@
 class Toolbar {
   // Initialize toolbar and cache DOM references
   constructor() {
-    // header buttons
+    // Header Buttons
     this.$btnPrevSong = $("#btnPrevSong");
     this.$btnNextSong = $("#btnNextSong");
     // Query Inputs
@@ -44,6 +44,8 @@ class Toolbar {
     this.$btnShuffle = $("#btnShuffle");
     this.$btnReverse = $("#btnReverse");
     this.$btnClearTable = $("#btnClearTable");
+    this.$btnCheckLinks = $("#btnCheckLinks");
+    this.$btnRebuildTable = $("#btnRebuildTable");
     this.$btnSearchMode = $("#btnSearchMode");
     this.$resultMode = $("#resultMode");
     // Client Filters
@@ -53,6 +55,7 @@ class Toolbar {
     this.$cfPartial = $("#cfPartial");
     this.$cfMatchCase = $("#cfMatchCase");
     this.$btnApplyClientFilter = $("#btnApplyClientFilter");
+
     this.wireEvents();
   }
 
@@ -66,7 +69,9 @@ class Toolbar {
     this.$searchSong.on("keydown", e => { if (e.key === "Enter") eventBus.emit("search:submit"); });
     this.$searchComposer.on("keydown", e => { if (e.key === "Enter") eventBus.emit("search:submit"); });
     this.$searchScope.on("change", () => this.updateScopePlaceholder());
+    this.$cfField.on("change", () => this.updateClientFilterUI());
     this.updateScopePlaceholder();
+    this.updateClientFilterUI();
     // React to searchMode changes (settings:changed event)
     eventBus.on("settings:changed", (payload) => {
       const newMode = payload?.key === "searchMode" ? payload.value : settingsManager.get("searchMode");
@@ -87,6 +92,8 @@ class Toolbar {
     this.$btnShuffle.on("click", () => eventBus.emit("table:shuffle"));
     this.$btnReverse.on("click", () => eventBus.emit("table:reverse"));
     this.$btnClearTable.on("click", () => eventBus.emit("table:clear"));
+    this.$btnCheckLinks.on("click", () => eventBus.emit("table:check-links-toggle"));
+    this.$btnRebuildTable.on("click", () => eventBus.emit("table:redownload-toggle"));
 
     // Client filter apply
     this.$btnApplyClientFilter.on("click", () => this.applyClientFilterFromUI());
@@ -173,6 +180,32 @@ class Toolbar {
     return appState.getStateSlice("ui.resultMode") || "new";
   }
 
+  // Update the Check Links button label/icon based on running state
+  updateCheckLinksButtonState(isRunning) {
+    if (isRunning) {
+      this.$btnCheckLinks.html('<i class="fa-solid fa-stop me-1"></i>Click to Stop');
+      this.$btnCheckLinks.removeClass("btn-outline-secondary").addClass("btn-outline-danger");
+      this.$btnCheckLinks.attr("title", "Click to stop link validation");
+    } else {
+      this.$btnCheckLinks.html('<i class="fa-solid fa-link me-1"></i>Check Links');
+      this.$btnCheckLinks.removeClass("btn-outline-danger").addClass("btn-outline-secondary");
+      this.$btnCheckLinks.attr("title", "Validate links for 720/480/MP3");
+    }
+  }
+
+  // Update the Redownload button label/icon based on running state
+  updateRedownloadButtonState(isRunning) {
+    if (isRunning) {
+      this.$btnRebuildTable.html('<i class="fa-solid fa-stop me-1"></i>Click to Stop');
+      this.$btnRebuildTable.removeClass("btn-outline-secondary").addClass("btn-outline-danger");
+      this.$btnRebuildTable.attr("title", "Click to stop redownloading");
+    } else {
+      this.$btnRebuildTable.html('<i class="fa-solid fa-rotate me-1"></i>Rebuild Table');
+      this.$btnRebuildTable.removeClass("btn-outline-danger").addClass("btn-outline-secondary");
+      this.$btnRebuildTable.attr("title", "Redownload the current table by ANN Song IDs");
+    }
+  }
+
   // Emit client filter payload from UI controls
   applyClientFilterFromUI() {
     const payload = {
@@ -201,6 +234,74 @@ class Toolbar {
     };
     const placeholder = placeholderMap[scope] || "Search anime, artist, song, composer";
     this.$searchQuery.attr("placeholder", placeholder);
+  }
+
+  // Update client filter UI based on action
+  updateClientFilterUI() {
+    const field = this.$cfField.val();
+
+    switch (field) {
+      case "Anime":
+        this.$cfQuery.attr("placeholder", "Enter Anime");
+        this.$cfPartial.prop("disabled", false);
+        this.$cfMatchCase.prop("disabled", false);
+        break;
+      case "Artist":
+        this.$cfQuery.attr("placeholder", "Enter Artist");
+        this.$cfPartial.prop("disabled", false);
+        this.$cfMatchCase.prop("disabled", false);
+        break;
+      case "Song":
+        this.$cfQuery.attr("placeholder", "Enter Song");
+        this.$cfPartial.prop("disabled", false);
+        this.$cfMatchCase.prop("disabled", false);
+        break;
+      case "Composer":
+        this.$cfQuery.attr("placeholder", "Enter Composer");
+        this.$cfPartial.prop("disabled", false);
+        this.$cfMatchCase.prop("disabled", false);
+        break;
+      case "Arranger":
+        this.$cfQuery.attr("placeholder", "Enter Arranger");
+        this.$cfPartial.prop("disabled", false);
+        this.$cfMatchCase.prop("disabled", false);
+        break;
+      case "Season":
+        this.$cfQuery.attr("placeholder", "Enter Season or Year Range (e.g. Winter 2024, 1999-2000)");
+        this.$cfPartial.prop("disabled", true);
+        this.$cfMatchCase.prop("disabled", true);
+        break;
+      case "Song Type":
+        this.$cfQuery.attr("placeholder", "Enter Song Type (e.g. OP, ED, IN)");
+        this.$cfPartial.prop("disabled", true);
+        this.$cfMatchCase.prop("disabled", true);
+        break;
+      case "Broadcast Type":
+        this.$cfQuery.attr("placeholder", "Enter Broadcast Type (e.g. Normal, Dub, Rebroadcast)");
+        this.$cfPartial.prop("disabled", true);
+        this.$cfMatchCase.prop("disabled", true);
+        break;
+      case "Song Category":
+        this.$cfQuery.attr("placeholder", "Enter Song Category (e.g. Standard, Character, Chanting, Instrumental)");
+        this.$cfPartial.prop("disabled", true);
+        this.$cfMatchCase.prop("disabled", true);
+        break;
+      case "ANN ID":
+        this.$cfQuery.attr("placeholder", "Enter ANN ID(s), comma-separated");
+        this.$cfPartial.prop("disabled", true);
+        this.$cfMatchCase.prop("disabled", true);
+        break;
+      case "Difficulty":
+        this.$cfQuery.attr("placeholder", "Enter Difficulty Range (e.g. 60-100)");
+        this.$cfPartial.prop("disabled", true);
+        this.$cfMatchCase.prop("disabled", true);
+        break;
+      case "Length":
+        this.$cfQuery.attr("placeholder", "Enter Length Range in seconds (e.g. 60-90)");
+        this.$cfPartial.prop("disabled", true);
+        this.$cfMatchCase.prop("disabled", true);
+        break;
+    }
   }
 }
 

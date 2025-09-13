@@ -5,12 +5,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ADB2</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png?v=4d9df7be" />
+  <link rel="icon" type="image/png" href="assets/favicon.png?v=928854c9" />
   <!-- Vendor CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" />
   <!-- App CSS -->
-  <link href="style.css?v=4d9df7be" rel="stylesheet" />
+  <link href="style.css?v=928854c9" rel="stylesheet" />
 </head>
 
 <body>
@@ -72,7 +72,7 @@
           <i class="fa-solid fa-magnifying-glass me-1"></i><span class="btn-label">Search</span>
         </button>
         <button id="btnFilters" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse"
-          data-bs-target="#advancedPane" aria-expanded="false" aria-controls="advancedPane" title="Song Filters">
+          data-bs-target="#advancedPane" aria-expanded="false" aria-controls="advancedPane" title="Song filters for search">
           <i class="fa-solid fa-sliders me-1"></i><span class="btn-label">Filters</span>
         </button>
         <button id="btnTable" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse"
@@ -266,7 +266,7 @@
     <div class="card">
       <div class="card-body">
         <div class="row g-3">
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-4">
             <div class="fw-semibold mb-2">Result Mode</div>
             <div id="resultMode" class="btn-group btn-group-sm" role="group" aria-label="Result mode">
               <button type="button" class="btn btn-outline-secondary active" data-mode="new" aria-pressed="true"
@@ -275,17 +275,28 @@
                 title="Add results to current table">Append</button>
             </div>
           </div>
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-5">
             <div class="fw-semibold mb-2">Table Operations</div>
             <div class="d-flex gap-2 flex-wrap">
-              <button id="btnShuffle" class="btn btn-sm btn-outline-secondary">
+              <button id="btnShuffle" class="btn btn-sm btn-outline-secondary" title="Shuffle current visible rows">
                 <i class="fa-solid fa-shuffle me-1"></i>Shuffle Results
               </button>
-              <button id="btnReverse" class="btn btn-sm btn-outline-secondary">
+              <button id="btnReverse" class="btn btn-sm btn-outline-secondary" title="Reverse current visible rows">
                 <i class="fa-solid fa-arrows-up-down me-1"></i>Reverse Order
               </button>
-              <button id="btnClearTable" class="btn btn-sm btn-outline-danger">
+              <button id="btnClearTable" class="btn btn-sm btn-outline-danger" title="Remove all rows from table">
                 <i class="fa-solid fa-trash me-1"></i>Clear Table
+              </button>
+            </div>
+          </div>
+          <div class="col-12 col-md-3">
+            <div class="fw-semibold mb-2">Tasks</div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button id="btnCheckLinks" class="btn btn-sm btn-outline-secondary" title="Validate links for 720/480/MP3">
+                <i class="fa-solid fa-link me-1"></i>Check Links
+              </button>
+              <button id="btnRebuildTable" class="btn btn-sm btn-outline-secondary" title="Fetch table songs by ANN Song IDs and rebuild with fresh data">
+                <i class="fa-solid fa-rotate me-1"></i>Rebuild Table
               </button>
             </div>
           </div>
@@ -309,7 +320,14 @@
               <option value="Artist">Artist</option>
               <option value="Song">Song</option>
               <option value="Composer">Composer</option>
+              <option value="Arranger">Arranger</option>
               <option value="Season">Season</option>
+              <option value="Song Type">Song Type</option>
+              <option value="Broadcast Type">Broadcast Type</option>
+              <option value="Song Category">Song Category</option>
+              <option value="ANN ID">ANN ID</option>
+              <option value="Difficulty">Difficulty</option>
+              <option value="Length">Length</option>
             </select>
           </div>
           <div class="col-12 col-md-4">
@@ -975,27 +993,27 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- App JS -->
-  <script src="core/config.js?v=4d9df7be"></script>
-  <script src="core/eventBus.js?v=4d9df7be"></script>
-  <script src="core/appState.js?v=4d9df7be"></script>
-  <script src="components/infoModal.js?v=4d9df7be"></script>
-  <script src="components/audioPlayer.js?v=4d9df7be"></script>
-  <script src="components/rowComponent.js?v=4d9df7be"></script>
-  <script src="components/tableComponent.js?v=4d9df7be"></script>
-  <script src="components/settingsModal.js?v=4d9df7be"></script>
-  <script src="components/playlistModal.js?v=4d9df7be"></script>
-  <script src="components/playlistSelectionModal.js?v=4d9df7be"></script>
-  <script src="components/toolbar.js?v=4d9df7be"></script>
-  <script src="components/statsModal.js?v=4d9df7be"></script>
-  <script src="components/alertComponent.js?v=4d9df7be"></script>
-  <script src="managers/settingsManager.js?v=4d9df7be"></script>
-  <script src="managers/hotkeyManager.js?v=4d9df7be"></script>
-  <script src="managers/ioManager.js?v=4d9df7be"></script>
-  <script src="managers/tableManager.js?v=4d9df7be"></script>
-  <script src="managers/searchManager.js?v=4d9df7be"></script>
-  <script src="managers/playlistManager.js?v=4d9df7be"></script>
-  <script src="managers/statsManager.js?v=4d9df7be"></script>
-  <script src="main.js?v=4d9df7be"></script>
+  <script src="core/config.js?v=928854c9"></script>
+  <script src="core/eventBus.js?v=928854c9"></script>
+  <script src="core/appState.js?v=928854c9"></script>
+  <script src="components/infoModal.js?v=928854c9"></script>
+  <script src="components/audioPlayer.js?v=928854c9"></script>
+  <script src="components/rowComponent.js?v=928854c9"></script>
+  <script src="components/tableComponent.js?v=928854c9"></script>
+  <script src="components/settingsModal.js?v=928854c9"></script>
+  <script src="components/playlistModal.js?v=928854c9"></script>
+  <script src="components/playlistSelectionModal.js?v=928854c9"></script>
+  <script src="components/toolbar.js?v=928854c9"></script>
+  <script src="components/statsModal.js?v=928854c9"></script>
+  <script src="components/alertComponent.js?v=928854c9"></script>
+  <script src="managers/settingsManager.js?v=928854c9"></script>
+  <script src="managers/hotkeyManager.js?v=928854c9"></script>
+  <script src="managers/ioManager.js?v=928854c9"></script>
+  <script src="managers/tableManager.js?v=928854c9"></script>
+  <script src="managers/searchManager.js?v=928854c9"></script>
+  <script src="managers/playlistManager.js?v=928854c9"></script>
+  <script src="managers/statsManager.js?v=928854c9"></script>
+  <script src="main.js?v=928854c9"></script>
 
 </body>
 

@@ -121,6 +121,26 @@ class TableManager {
         row.updatePlayButtonState();
       });
     });
+
+    // Link checker start/stop
+    this.linkCheckState = { running: false, abortControllers: [], processed: 0, total: 0, bad: 0, cancelled: false, alertFinal: false };
+    eventBus.on("table:check-links-toggle", () => {
+      if (this.linkCheckState.running) {
+        this.stopLinkCheck();
+      } else {
+        this.startLinkCheck();
+      }
+    });
+
+    // Redownload table task start/stop
+    this.redownloadState = { running: false, aborter: null, processed: 0, total: 0, cancelled: false, success: 0, alertFinal: false };
+    eventBus.on("table:redownload-toggle", () => {
+      if (this.redownloadState.running) {
+        this.stopRedownload();
+      } else {
+        this.startRedownload();
+      }
+    });
   }
 
   // Load new data into the table, replacing all existing data
@@ -204,29 +224,115 @@ class TableManager {
     const normalize = (s) => (isCaseSensitive ? String(s ?? "") : String(s ?? "").toLowerCase());
     const term = normalize(termRaw);
 
-    const getFieldValue = (row) => {
-      switch (scope) {
-        case "Anime":
-          return this.getAnimeTitle(row);
-        case "Artist":
-          return row.songArtist || "";
-        case "Song":
-          return row.songName || "";
-        case "Composer":
-          return row.songComposer || "";
-        case "Season":
-          return row.animeVintage || "";
-        default:
-          return "";
+    const canonicalType = (t) => {
+      const s = String(t || "").toUpperCase().trim();
+      if (s.startsWith("OPENING") || s.startsWith("OP")) return "OP";
+      if (s.startsWith("ENDING") || s.startsWith("ED")) return "ED";
+      if (s.startsWith("INSERT") || s.startsWith("IN")) return "IN";
+      return s;
+    };
+
+    const parseRange = (input) => {
+      const s = String(input || "").trim();
+      const m = s.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (m) {
+        const a = parseInt(m[1], 10);
+        const b = parseInt(m[2], 10);
+        if (Number.isFinite(a) && Number.isFinite(b)) return { min: Math.min(a, b), max: Math.max(a, b) };
       }
+      const single = parseInt(s, 10);
+      if (Number.isFinite(single)) return { min: single, max: single };
+      return null;
     };
 
     const matches = (row) => {
-      const value = normalize(getFieldValue(row));
-      if (!isPartial) {
-        return value === term;
+      switch (scope) {
+        case "Anime": {
+          const value = normalize(this.getAnimeTitle(row));
+          return isPartial ? value.includes(term) : value === term;
+        }
+        case "Artist": {
+          const value = normalize(row.songArtist || "");
+          return isPartial ? value.includes(term) : value === term;
+        }
+        case "Song": {
+          const value = normalize(row.songName || "");
+          return isPartial ? value.includes(term) : value === term;
+        }
+        case "Composer": {
+          const value = normalize(row.songComposer || "");
+          return isPartial ? value.includes(term) : value === term;
+        }
+        case "Arranger": {
+          const value = normalize(row.songArranger || "");
+          return isPartial ? value.includes(term) : value === term;
+        }
+        case "Season": {
+          // Case-insensitive, partial matching by default; also support year and year ranges
+          const vintage = String(row.animeVintage || "");
+          const lowerVintage = vintage.toLowerCase();
+          const q = String(termRaw || "").trim();
+          const lowerQ = q.toLowerCase();
+
+          // Year range like 1999-2000
+          const yrRange = q.match(/^(\d{4})\s*-\s*(\d{4})$/);
+          if (yrRange) {
+            const yMin = parseInt(yrRange[1], 10);
+            const yMax = parseInt(yrRange[2], 10);
+            const m = vintage.match(/(\d{4})/);
+            if (!m) return false;
+            const y = parseInt(m[1], 10);
+            const lo = Math.min(yMin, yMax);
+            const hi = Math.max(yMin, yMax);
+            return y >= lo && y <= hi;
+          }
+
+          // Single year like 2000
+          if (/^\d{4}$/.test(q)) {
+            const m = vintage.match(/(\d{4})/);
+            if (!m) return false;
+            return parseInt(m[1], 10) === parseInt(q, 10);
+          }
+
+          // Otherwise, substring case-insensitive (e.g., "winter")
+          return lowerVintage.includes(lowerQ);
+        }
+        case "Song Type": {
+          const value = canonicalType(row.songType);
+          const q = canonicalType(termRaw);
+          return value === q;
+        }
+        case "Broadcast Type": {
+          const value = broadcastText(row);
+          return value.toLowerCase() === String(termRaw || "").toLowerCase();
+        }
+        case "Song Category": {
+          const value = String(row.songCategory || "");
+          return value.toLowerCase() === String(termRaw || "").toLowerCase();
+        }
+        case "ANN ID": {
+          const ids = String(termRaw || "").split(",").map(s => s.trim()).filter(Boolean).map(s => parseInt(s, 10)).filter(n => Number.isFinite(n));
+          if (ids.length === 0) return false;
+          const idSet = new Set(ids);
+          return idSet.has(Number(row.annId));
+        }
+        case "Difficulty": {
+          const range = parseRange(termRaw);
+          if (!range) return false;
+          const val = Number(row.songDifficulty);
+          if (!Number.isFinite(val)) return false;
+          return val >= range.min && val <= range.max;
+        }
+        case "Length": {
+          const range = parseRange(termRaw);
+          if (!range) return false;
+          const val = Number(row.songLength);
+          if (!Number.isFinite(val)) return false;
+          return val >= range.min && val <= range.max;
+        }
+        default:
+          return false;
       }
-      return value.includes(term);
     };
 
     // Compute which rows to remove from visible
@@ -312,6 +418,194 @@ class TableManager {
     } else if (format === "json") {
       ioManager.exportAsJSON(data);
     }
+  }
+
+  // Start redownloading current visible table using ANN Song IDs (500 per batch)
+  startRedownload() {
+    const visible = [...this.state.visible];
+    const missing = visible.filter(r => !r.annSongId).length;
+    if (missing > 0) {
+      showAlert(`Error: ${missing} songs are missing ANN Song ID`, "danger");
+      return;
+    }
+
+    const ids = visible.map(r => Number(r.annSongId));
+    const batches = [];
+    for (let i = 0; i < ids.length; i += 500) batches.push(ids.slice(i, i + 500));
+
+    this.redownloadState = { running: true, aborter: new AbortController(), processed: 0, total: batches.length, cancelled: false, success: 0, alertFinal: false };
+    toolbar.updateRedownloadButtonState(true);
+    alertComponent.showAlert(`Redownloading ${this.redownloadState.processed}/${this.redownloadState.total} batches. Do NOT alter the table while this runs.`, "warning");
+
+    const run = async () => {
+      // Collect all refreshed rows to rebuild table in the same order
+      const collected = [];
+      try {
+        for (let i = 0; i < batches.length; i++) {
+          if (!this.redownloadState.running) break;
+          // Minimal body for ann_song_ids_request
+          const body = { ann_song_ids: batches[i] };
+          const data = await searchManager.postJson(`${API_BASE}/api/ann_song_ids_request`, body);
+          const rows = Array.isArray(data) ? data : [];
+          this.redownloadState.success += rows.length;
+          collected.push(...rows);
+          this.redownloadState.processed++;
+          alertComponent.showAlert(`Redownloading ${this.redownloadState.processed}/${this.redownloadState.total} batches. Do NOT alter the table while this runs.`, "warning");
+        }
+      } catch (e) {
+        // treat abort as stop
+        this.redownloadState.cancelled = true;
+      } finally {
+        const stopped = !this.redownloadState.running || this.redownloadState.cancelled || this.redownloadState.processed < this.redownloadState.total;
+        this.redownloadState.running = false;
+        toolbar.updateRedownloadButtonState(false);
+        if (stopped) {
+          alertComponent.showAlert(`Redownload stopped (${this.redownloadState.processed}/${this.redownloadState.total}).`, "danger");
+        } else {
+          // Rebuild the table using refreshed rows (fallback to original row if missing)
+          const byAnnSongId = new Map(collected.map(r => [Number(r.annSongId), r]));
+          const rebuilt = visible.map(old => byAnnSongId.get(Number(old.annSongId)) || old);
+          this.loadData(rebuilt);
+          alertComponent.showAlert(`Redownload completed (${this.redownloadState.processed}/${this.redownloadState.total}). ${this.redownloadState.success} songs redownloaded.`, "success");
+        }
+      }
+    };
+    run();
+  }
+
+  // Stop redownloading
+  stopRedownload() {
+    this.redownloadState.cancelled = true;
+    this.redownloadState.running = false;
+    toolbar.updateRedownloadButtonState(false);
+    alertComponent.showAlert(`Redownload stopped (${this.redownloadState.processed}/${this.redownloadState.total}).`, "danger");
+  }
+
+  // Start link validation over current visible rows with limited concurrency
+  startLinkCheck() {
+    const visible = [...this.state.visible];
+    const total = visible.length;
+    this.linkCheckState = { running: true, abortControllers: [], processed: 0, total, bad: 0, cancelled: false, alertFinal: false };
+    toolbar.updateCheckLinksButtonState(true);
+    this.updateLinkCheckAlert();
+
+    const tasks = visible.map(row => () => this.checkRowLinks(row));
+    this.runWithConcurrency(tasks, 5).then(() => {
+      this.linkCheckState.running = false;
+      const stopped = this.linkCheckState.cancelled || this.linkCheckState.processed < this.linkCheckState.total;
+      this.updateLinkCheckAlert(true, stopped);
+      this.linkCheckState.alertFinal = true;
+      toolbar.updateCheckLinksButtonState(false);
+    }).catch(() => {
+      this.linkCheckState.running = false;
+      toolbar.updateCheckLinksButtonState(false);
+      if (!this.linkCheckState.alertFinal) alertComponent.hideAlert();
+    });
+  }
+
+  // Stop link validation and abort outstanding requests
+  stopLinkCheck() {
+    this.linkCheckState.cancelled = true;
+    this.linkCheckState.running = false;
+    this.linkCheckState.abortControllers.forEach(ac => ac.abort());
+    this.linkCheckState.abortControllers = [];
+    toolbar.updateCheckLinksButtonState(false);
+    // Immediately inform the user that the task has been stopped
+    this.updateLinkCheckAlert(true, true);
+    this.linkCheckState.alertFinal = true;
+  }
+
+  // Show progress alert
+  updateLinkCheckAlert(done = false, stopped = false) {
+    if (this.linkCheckState.alertFinal) return; // Do not overwrite a final/stopped banner
+    if (done) {
+      const bad = this.linkCheckState.bad || 0;
+      if (stopped) {
+        alertComponent.showAlert(`Link check stopped (${this.linkCheckState.processed}/${this.linkCheckState.total}). ${bad} bad links found so far.`, "danger");
+      } else {
+        alertComponent.showAlert(`Link check completed (${this.linkCheckState.processed}/${this.linkCheckState.total}). ${bad} bad links found.`, "success");
+      }
+      return;
+    }
+    alertComponent.showAlert(`Processing songs ${this.linkCheckState.processed}/${this.linkCheckState.total}. Do NOT alter the table while this runs.`, "warning");
+  }
+
+  // Limit parallel tasks helper
+  async runWithConcurrency(taskFactories, limit) {
+    let i = 0;
+    const workers = new Array(Math.min(limit, taskFactories.length)).fill(0).map(async () => {
+      while (this.linkCheckState.running && i < taskFactories.length) {
+        const idx = i++;
+        await taskFactories[idx]();
+      }
+    });
+    await Promise.all(workers);
+  }
+
+  // Check a single row's links (720, 480, MP3)
+  async checkRowLinks(row) {
+    const key = this.rowKey(row);
+    const rowComp = this.table.rows.get(key);
+    const $tr = this.table.$tbody.find(`tr[data-key="${CSS.escape(key)}"]`);
+    if ($tr.length === 0) {
+      this.linkCheckState.processed++;
+      this.updateLinkCheckAlert();
+      return;
+    }
+
+    const urls = [
+      { label: "720", url: audioPlayer.buildMediaUrl(row.HQ) },
+      { label: "480", url: audioPlayer.buildMediaUrl(row.MQ) },
+      { label: "MP3", url: audioPlayer.buildMediaUrl(row.audio) }
+    ].filter(item => item.url);
+
+    const checks = urls.map(({ label, url }) =>
+      this.checkUrl(url).then(ok => {
+        rowComp.updateLinkLabelStatus(label, ok);
+        if (!ok) this.linkCheckState.bad++;
+      })
+    );
+
+    await Promise.allSettled(checks);
+    this.linkCheckState.processed++;
+    if (this.linkCheckState.processed % 5 === 0 || this.linkCheckState.processed === this.linkCheckState.total) {
+      this.updateLinkCheckAlert();
+    }
+  }
+
+  // Fast URL check: try HEAD else metadata load; timeouts treated as bad
+  async checkUrl(url) {
+    // Try HEAD request
+    try {
+      const ac = new AbortController();
+      this.linkCheckState.abortControllers.push(ac);
+      const resp = await fetch(audioPlayer.rewriteFileHost(url), { method: "HEAD", signal: ac.signal, mode: "cors" });
+      if (resp && resp.ok) return true;
+      if (resp && (resp.status === 404 || resp.status === 410)) return false;
+    } catch (e) {
+      // Continue to media probe
+    }
+
+    // Media probe with timeout
+    const timeoutMs = 8000;
+    const p = new Promise((resolve) => {
+      const ac = new AbortController();
+      this.linkCheckState.abortControllers.push(ac);
+      let settled = false;
+      const onDone = (ok) => { if (!settled) { settled = true; resolve(ok); } };
+      let el;
+      if (/\.mp3(\?|$)/i.test(url)) {
+        el = document.createElement("audio");
+      } else {
+        el = document.createElement("video");
+      }
+      el.preload = "metadata";
+      el.src = audioPlayer.rewriteFileHost(url);
+      el.addEventListener("loadedmetadata", () => onDone(true));
+      el.addEventListener("error", () => onDone(false));
+      setTimeout(() => onDone(false), timeoutMs);
+    });
+    return p;
   }
 
   // Handle file uploads (JSON or CSV) for importing data

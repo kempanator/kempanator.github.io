@@ -229,6 +229,16 @@ class RowComponent {
     });
   }
 
+  // Update a specific link label ("720" | "480" | "MP3") with success/error styling
+  updateLinkLabelStatus(label, isOk) {
+    if (!this.$tableElement) return;
+    const $linksCell = this.$tableElement.find('td[data-col="links"]');
+    const $label = $linksCell.find(`.link-label[data-label="${label}"]`);
+    if (!$label.length) return;
+    $label.toggleClass("text-success", Boolean(isOk));
+    $label.toggleClass("text-danger", !Boolean(isOk));
+  }
+
   // Attach event listeners to table row elements for user interactions
   setupTableEventListeners($element) {
     $element.on("click", (e) => {
