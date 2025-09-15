@@ -11,6 +11,7 @@ class TableComponent {
     this.$cardContainer = $("#resultsCards");
     this.resultsCount = $("#resultsCount");
     this.rows = new Map(); // key -> RowComponent instance
+    this.keyResolver = null; // function(rowData) => key string
 
     // Wire sortable for manual row reordering
     new Sortable(this.$tbody[0], {
@@ -21,6 +22,11 @@ class TableComponent {
         eventBus.emit("table:reordered", { order: domKeys });
       }
     });
+  }
+
+  // Set a resolver function that returns the stable key for a given row data
+  setKeyResolver(fn) {
+    this.keyResolver = typeof fn === "function" ? fn : null;
   }
 
   // Set the table data and render all rows
@@ -34,9 +40,9 @@ class TableComponent {
 
   // Add a single data row to the table with the specified index
   addRow(data, index) {
-    const key = `${data.annId}-${data.annSongId}`;
-    const row = new RowComponent(data, index);
-    this.rows.set(key, row);
+    const resolvedKey = this.keyResolver(data);
+    const row = new RowComponent(data, index, resolvedKey);
+    this.rows.set(resolvedKey, row);
     return row;
   }
 
@@ -116,8 +122,10 @@ class TableComponent {
     if (manualOrderActive) {
       // When manual order is active, preserve the order as it appears in the songs.visible array
       const songs = appState.getStateSlice("songs");
-      const rowMap = new Map(rows.map(row => [row.getKey(), row]));
-      return songs.visible.map(songData => rowMap.get(`${songData.annId}-${songData.annSongId}`)).filter(Boolean);
+      const rowMap = new Map(rows.map(row => [row.key, row]));
+      return songs.visible
+        .map(songData => rowMap.get(this.keyResolver ? this.keyResolver(songData) : null))
+        .filter(Boolean);
     }
 
     // Get sort state from global state manager

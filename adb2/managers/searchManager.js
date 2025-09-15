@@ -511,6 +511,21 @@ class SearchManager {
     });
     return out;
   }
+
+  // Fetch rows by ANN Song IDs in chunks of 500
+  async fetchRowsByAnnSongIds(annSongIds) {
+    const ids = Array.isArray(annSongIds) ? annSongIds.map(n => Number(n)).filter(Number.isFinite) : [];
+    if (ids.length === 0) return [];
+    const chunkSize = 500;
+    const all = [];
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const body = { ann_song_ids: chunk };
+      const data = await this.postJson(`${API_BASE}/api/ann_song_ids_request`, body);
+      if (Array.isArray(data)) all.push(...data);
+    }
+    return all;
+  }
 }
 
 const searchManager = new SearchManager();

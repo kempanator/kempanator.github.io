@@ -9,8 +9,8 @@ class PlaylistManager {
     // Listen for events from EventBus
     eventBus.on("playlist:add-song", (data) => {
       const songs = appState.getStateSlice("songs");
-      const songData = songs.visible.find(r => tableManager.rowKey(r) === data.songId) ||
-        songs.raw.find(r => tableManager.rowKey(r) === data.songId);
+      const songData = songs.visible.find(r => tableManager.getKeyForRow(r) === data.songId) ||
+        songs.raw.find(r => tableManager.getKeyForRow(r) === data.songId);
 
       if (!songData || !songData.annSongId) {
         showAlert("Cannot add song to playlist - missing ANN Song ID", "warning");
@@ -247,61 +247,29 @@ class PlaylistManager {
       return;
     }
 
-    // Get all songs from the playlist
-    const allResults = [];
-    const chunkSize = 500; // Process in chunks to avoid overwhelming the API
-    const chunks = [];
+    // Load playlist as a new table
+    this.loadAnnSongIdsIntoTable(playlist.annSongIds, false, playlist.name);
+  }
 
-    for (let i = 0; i < playlist.annSongIds.length; i += chunkSize) {
-      chunks.push(playlist.annSongIds.slice(i, i + chunkSize));
-    }
-
-    if (chunks.length === 0) {
-      showAlert("Playlist is empty", "warning");
+  // Helper: load songs for a list of ANN Song IDs
+  loadAnnSongIdsIntoTable(annSongIds, isAppend = false, name = "playlist") {
+    const ids = Array.isArray(annSongIds) ? annSongIds.map(n => Number(n)).filter(Number.isFinite) : [];
+    if (ids.length === 0) {
+      showAlert("No ANN Song IDs to load", "warning");
       return;
     }
 
-    // Clear the current table and show loading spinner
-    eventBus.emit("table:clear");
     searchManager.setLoading(true);
-
-    // Process chunks sequentially
-    const processChunk = (chunkIndex) => {
-      if (chunkIndex >= chunks.length) {
-        // All chunks processed, show success and stop loading
-        searchManager.setLoading(false);
-        showAlert(`Loaded ${allResults.length} song${allResults.length === 1 ? "" : "s"} from playlist "${playlist.name}"`, "success");
-        return;
-      }
-
-      const chunk = chunks[chunkIndex];
-      const body = {
-        ann_song_ids: chunk
-      };
-
-      searchManager.postJson(`${API_BASE}/api/ann_song_ids_request`, body)
-        .then(data => {
-          allResults.push(...data);
-
-          // Load first chunk into table, append subsequent chunks
-          if (chunkIndex === 0) {
-            tableManager.loadData(allResults);
-          } else {
-            tableManager.appendData(data);
-          }
-
-          // Process next chunk
-          processChunk(chunkIndex + 1);
-        })
-        .catch(err => {
-          showAlert(`Failed to load chunk ${chunkIndex + 1}/${chunks.length}: ${err.message || err}`, "danger");
-          searchManager.onFetchError(err);
-          searchManager.setLoading(false);
-        });
-    };
-
-    // Start processing chunks
-    processChunk(0);
+    searchManager.fetchRowsByAnnSongIds(ids)
+      .then(rows => {
+        if (isAppend) tableManager.appendData(rows); else tableManager.loadData(rows);
+        const label = name ? `\"${name}\"` : "playlist";
+        showAlert(`Loaded ${rows.length} song${rows.length === 1 ? "" : "s"} from ${label}`, "success");
+      })
+      .catch(err => {
+        searchManager.onFetchError(err);
+      })
+      .finally(() => searchManager.setLoading(false));
   }
 
   // Export a single playlist as JSON file with playlist metadata

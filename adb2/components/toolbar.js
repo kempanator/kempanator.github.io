@@ -46,6 +46,7 @@ class Toolbar {
     this.$btnClearTable = $("#btnClearTable");
     this.$btnCheckLinks = $("#btnCheckLinks");
     this.$btnRebuildTable = $("#btnRebuildTable");
+    this.$btnCheckSongIds = $("#btnCheckSongIds");
     this.$btnSearchMode = $("#btnSearchMode");
     this.$resultMode = $("#resultMode");
     // Client Filters
@@ -82,7 +83,7 @@ class Toolbar {
     this.$btnExportCSV.on("click", () => tableManager.export("csv"));
     this.$btnExportJSON.on("click", () => tableManager.export("json"));
     this.$btnImportFile.on("click", () => this.$songListFileInput.trigger("click"));
-    this.$songListFileInput.on("change", (event) => tableManager.onUploadJson(event));
+    this.$songListFileInput.on("change", (event) => tableManager.onSongListUpload(event));
 
     // Player controls
     this.$btnPrevSong.on("click", () => eventBus.emit("audio:previous"));
@@ -94,6 +95,7 @@ class Toolbar {
     this.$btnClearTable.on("click", () => eventBus.emit("table:clear"));
     this.$btnCheckLinks.on("click", () => eventBus.emit("table:check-links-toggle"));
     this.$btnRebuildTable.on("click", () => eventBus.emit("table:redownload-toggle"));
+    this.$btnCheckSongIds.on("click", () => eventBus.emit("table:check-song-ids"));
 
     // Client filter apply
     this.$btnApplyClientFilter.on("click", () => this.applyClientFilterFromUI());

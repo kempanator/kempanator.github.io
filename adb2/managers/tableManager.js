@@ -2,6 +2,10 @@ class TableManager {
   // Initialize table manager with table, settings, and audio player references
   constructor() {
     this.table = new TableComponent();
+    // Unique key generator for row instances (allows duplicate ANN Song IDs to coexist)
+    this.rowInstanceCounter = 1;
+    // Map row objects to stable keys without mutating data
+    this.rowToKey = new WeakMap();
 
     // Reference App State for state
     this.state = appState.getStateSlice("songs");
@@ -84,7 +88,7 @@ class TableManager {
     // React to row reorder events from the table component
     eventBus.on("table:reordered", ({ order }) => {
       const songs = appState.getStateSlice("songs");
-      const newVisible = [...songs.visible].sort((a, b) => order.indexOf(this.rowKey(a)) - order.indexOf(this.rowKey(b)));
+      const newVisible = [...songs.visible].sort((a, b) => order.indexOf(this.getKeyForRow(a)) - order.indexOf(this.getKeyForRow(b)));
       appState.updateStateSlice("songs.visible", () => newVisible);
       appState.updateStateSlice("table.manualOrderActive", () => true);
       this.table.render();
@@ -141,32 +145,84 @@ class TableManager {
         this.startRedownload();
       }
     });
+
+    // Check Song IDs task
+    eventBus.on("table:check-song-ids", () => {
+      const visible = [...this.state.visible];
+      const total = visible.length;
+      const idToKeys = new Map();
+      let missing = 0;
+      // Build map of annSongId -> [rowKey,...]
+      visible.forEach(row => {
+        const id = row.annSongId;
+        if (id == null || id === "") { missing++; return; }
+        const k = String(id);
+        const arr = idToKeys.get(k) || [];
+        arr.push(this.getKeyForRow(row));
+        idToKeys.set(k, arr);
+      });
+
+      // Reset any prior duplicate marks
+      this.table.rows.forEach(rc => rc.setAnnSongIdDuplicate(false));
+
+      // Mark duplicates and count
+      let duplicateBuckets = 0;
+      idToKeys.forEach((keys, id) => {
+        if (keys.length > 1) {
+          duplicateBuckets++;
+          keys.forEach(key => {
+            const rc = this.table.rows.get(key);
+            if (rc) rc.setAnnSongIdDuplicate(true);
+          });
+        }
+      });
+
+      const uniqueCount = idToKeys.size;
+      const msg = `ANN Song IDs — Unique: ${uniqueCount}, Duplicates: ${duplicateBuckets}, Missing: ${missing}`;
+      const allGood = duplicateBuckets === 0 && missing === 0 && uniqueCount === total;
+      alertComponent.showAlert(msg, allGood ? "success" : "warning");
+    });
   }
 
   // Load new data into the table, replacing all existing data
   loadData(data) {
+    // Assign stable keys without mutating row data; expose resolver to TableComponent
+    const rowsWithKeys = (Array.isArray(data) ? data : []).map(d => {
+      const clone = { ...d };
+      const key = String(this.rowInstanceCounter++);
+      this.rowToKey.set(clone, key);
+      return clone;
+    });
+
     // Update AppState
-    appState.updateStateSlice("songs.raw", () => data);
-    appState.updateStateSlice("songs.visible", () => data.slice());
+    appState.updateStateSlice("songs.raw", () => rowsWithKeys);
+    appState.updateStateSlice("songs.visible", () => rowsWithKeys.slice());
     appState.updateStateSlice("songs.removedKeys", () => new Set());
     appState.updateStateSlice("table.manualOrderActive", () => false);
     appState.updateStateSlice("table.sort.column", () => null);
     appState.updateStateSlice("table.sort.dir", () => null);
 
     // Update local references
-    this.state.raw = data;
-    this.state.visible = data.slice();
+    this.state.raw = rowsWithKeys;
+    this.state.visible = rowsWithKeys.slice();
     this.state.removedKeys.clear();
     this.tableState.manualOrderActive = false;
     this.tableState.sort = { column: null, dir: null };
 
+    this.table.setKeyResolver((row) => this.getKeyForRow(row));
     this.table.setData(this.state.visible);
   }
 
   // Append new data to the existing table data
   appendData(data) {
-    const newRaw = this.state.raw.concat(data);
-    const newVisible = this.state.visible.concat(data);
+    const appendedWithKeys = (Array.isArray(data) ? data : []).map(d => {
+      const clone = { ...d };
+      const key = String(this.rowInstanceCounter++);
+      this.rowToKey.set(clone, key);
+      return clone;
+    });
+    const newRaw = this.state.raw.concat(appendedWithKeys);
+    const newVisible = this.state.visible.concat(appendedWithKeys);
 
     // Update AppState
     appState.updateStateSlice("songs.raw", () => newRaw);
@@ -182,9 +238,9 @@ class TableManager {
     this.tableState.sort = { column: null, dir: null };
 
     // Add new rows to table
-    data.forEach((rowData, index) => {
-      const actualIndex = this.state.visible.length - data.length + index;
-      this.table.addRow(rowData, actualIndex);
+    appendedWithKeys.forEach((rowData, index) => {
+      const actualIndex = this.state.visible.length - appendedWithKeys.length + index;
+      this.table.addRow(rowData, actualIndex, this.getKeyForRow(rowData));
     });
 
     this.table.render();
@@ -342,7 +398,7 @@ class TableManager {
       const row = currentVisible[i];
       const doesMatch = matches(row);
       if ((desiredAction === "keep" && !doesMatch) || (desiredAction === "remove" && doesMatch)) {
-        toRemove.push(this.rowKey(row));
+        toRemove.push(this.getKeyForRow(row));
       }
     }
 
@@ -353,7 +409,7 @@ class TableManager {
     // Update removedKeys and visible
     const newRemovedKeys = new Set(this.state.removedKeys);
     toRemove.forEach(k => newRemovedKeys.add(k));
-    const newVisible = currentVisible.filter(r => !newRemovedKeys.has(this.rowKey(r)));
+    const newVisible = currentVisible.filter(r => !newRemovedKeys.has(this.getKeyForRow(r)));
 
     appState.updateStateSlice("songs.removedKeys", () => newRemovedKeys);
     appState.updateStateSlice("songs.visible", () => newVisible);
@@ -544,7 +600,7 @@ class TableManager {
 
   // Check a single row's links (720, 480, MP3)
   async checkRowLinks(row) {
-    const key = this.rowKey(row);
+    const key = this.getKeyForRow(row);
     const rowComp = this.table.rows.get(key);
     const $tr = this.table.$tbody.find(`tr[data-key="${CSS.escape(key)}"]`);
     if ($tr.length === 0) {
@@ -608,22 +664,42 @@ class TableManager {
     return p;
   }
 
-  // Handle file uploads (JSON or CSV) for importing data
-  async onUploadJson(evt) {
+  // Handle file uploads (JSON, CSV, Playlist) for importing data
+  async onSongListUpload(evt) {
     const f = evt.target.files?.[0];
     evt.target.value = ""; // reset
     if (!f) return;
     try {
       const text = await f.text();
-      const rows = ioManager.parseFileText({ name: f.name, type: f.type }, text);
-      this.loadData(rows);
-    } catch (err) { showAlert(`Upload failed: ${err.message || err}`, "danger"); }
-  }
 
-  // Apply settings changes to the table by re-rendering
-  syncWithSettings() {
-    // Apply settings changes to the table
-    this.table.render();
+      // Try JSON first to support playlist import and JSON row arrays
+      try {
+        const res = ioManager.parseUploadText({ name: f.name, type: f.type }, text);
+        if (res && res.kind === "error") {
+          showAlert(res.message || "Invalid file format.", "danger");
+          return;
+        }
+        if (res && res.kind === "playlist") {
+          const isAppend = appState.getStateSlice("ui.resultMode") === "append";
+          playlistManager.loadAnnSongIdsIntoTable(res.ids, isAppend, res.name || "playlist");
+          return;
+        }
+        if (res && res.kind === "rows") {
+          const isAppend = appState.getStateSlice("ui.resultMode") === "append";
+          if (isAppend) this.appendData(res.rows); else this.loadData(res.rows);
+          return;
+        }
+      } catch (_jsonErr) {
+        // Not JSON; proceed to CSV/auto-detect parser
+      }
+
+      // Use ioManager to parse CSV or row-array JSON
+      const rows = ioManager.parseFileText({ name: f.name, type: f.type }, text);
+      const isAppend = appState.getStateSlice("ui.resultMode") === "append";
+      if (isAppend) this.appendData(rows); else this.loadData(rows);
+    } catch (err) {
+      showAlert(`Upload failed: ${err.message || err}`, "danger");
+    }
   }
 
   // Remove a row from both state and table by its unique key
@@ -631,7 +707,7 @@ class TableManager {
     // Update AppState
     const newRemovedKeys = new Set(this.state.removedKeys);
     newRemovedKeys.add(key);
-    const newVisible = this.state.visible.filter(r => this.rowKey(r) !== key);
+    const newVisible = this.state.visible.filter(r => this.getKeyForRow(r) !== key);
 
     appState.updateStateSlice("songs.removedKeys", () => newRemovedKeys);
     appState.updateStateSlice("songs.visible", () => newVisible);
@@ -642,6 +718,11 @@ class TableManager {
 
     this.table.removeRow(key);
     this.table.render();
+  }
+
+  // Return the stable key for a given row data object
+  getKeyForRow(row) {
+    return this.rowToKey.get(row);
   }
 
   // Get anime title based on current language preference setting
@@ -696,10 +777,6 @@ class TableManager {
     }
   }
 
-  // Generate a unique key for a data row based on ANN ID and Song ID
-  rowKey(r) {
-    return `${r.annId}-${r.annSongId}`;
-  }
 }
 
 const tableManager = new TableManager();

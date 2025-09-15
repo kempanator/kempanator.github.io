@@ -279,6 +279,45 @@ class IOManager {
     if (typeNumber != null && typeNumber !== "") return `${base} ${typeNumber}`;
     return base;
   }
+
+  // Try to parse JSON, return { ok, value }
+  tryParseJson(text) {
+    try {
+      const obj = JSON.parse(text);
+      return { ok: true, value: obj };
+    } catch (e) {
+      return { ok: false };
+    }
+  }
+
+  // Parse upload text into either a playlist descriptor or concrete rows
+  parseUploadText(fileMeta, text) {
+    const j = this.tryParseJson(text);
+    if (j.ok && j.value && typeof j.value === "object") {
+      const obj = j.value;
+      if (obj.type === "playlists") {
+        return { kind: "error", message: "Only single playlist files are supported." };
+      }
+      if (obj.type === "playlist" && obj.data && typeof obj.data === "object") {
+        const values = Object.values(obj.data);
+        if (values.length !== 1) {
+          return { kind: "error", message: "Only single playlist files are supported." };
+        }
+        const playlist = values[0] || {};
+        const name = String(playlist.name || "playlist");
+        const ids = (Array.isArray(playlist.annSongIds) ? playlist.annSongIds : [])
+          .map(n => Number(n)).filter(Number.isFinite);
+        if (ids.length === 0) {
+          return { kind: "error", message: "Playlist has no ANN Song IDs." };
+        }
+        return { kind: "playlist", name, ids };
+      }
+      // Not a playlist wrapper; allow row-array imports to be handled by parseFileText
+    }
+    // Fallback to existing generic parser that supports CSV and JSON rows
+    const rows = this.parseFileText(fileMeta, text);
+    return { kind: "rows", rows };
+  }
 }
 
 const ioManager = new IOManager();

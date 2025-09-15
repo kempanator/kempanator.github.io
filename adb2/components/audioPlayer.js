@@ -128,8 +128,8 @@ class AudioPlayer {
 
     // Find the song data from state manager
     const songs = appState.getStateSlice("songs");
-    return songs.visible.find(r => tableManager.rowKey(r) === currentKey) ||
-      songs.raw.find(r => tableManager.rowKey(r) === currentKey);
+    return songs.visible.find(r => tableManager.getKeyForRow(r) === currentKey) ||
+      songs.raw.find(r => tableManager.getKeyForRow(r) === currentKey);
   }
 
   // Check if audio is currently playing
@@ -286,14 +286,14 @@ class AudioPlayer {
   // Get the current order of keys from state (visible songs order)
   getOrderKeys() {
     const songs = appState.getStateSlice("songs");
-    return (songs.visible || []).map(r => tableManager.rowKey(r));
+    return (songs.visible || []).map(r => tableManager.getKeyForRow(r));
   }
 
   // Resolve the best source URL for a given key using state data
   getBestSourceUrlForKey(key) {
     const songs = appState.getStateSlice("songs");
-    const row = (songs.visible || []).find(r => tableManager.rowKey(r) === key) ||
-      (songs.raw || []).find(r => tableManager.rowKey(r) === key);
+    const row = (songs.visible || []).find(r => tableManager.getKeyForRow(r) === key) ||
+      (songs.raw || []).find(r => tableManager.getKeyForRow(r) === key);
     return this.pickBestUrlFromData(row);
   }
 
@@ -367,8 +367,8 @@ class AudioPlayer {
   // Get all available audio sources for a song
   getSongSources(key) {
     const songs = appState.getStateSlice("songs");
-    const row = (songs.visible || []).find(r => tableManager.rowKey(r) === key) ||
-      (songs.raw || []).find(r => tableManager.rowKey(r) === key);
+    const row = (songs.visible || []).find(r => tableManager.getKeyForRow(r) === key) ||
+      (songs.raw || []).find(r => tableManager.getKeyForRow(r) === key);
     if (!row) return { hq: null, mq: null, mp3: null };
     return {
       hq: this.buildMediaUrl(row.HQ || ""),

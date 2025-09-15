@@ -86,12 +86,12 @@ class InfoModal {
     if (!key) return;
 
     const songs = appState.getStateSlice("songs");
-    const data = songs.visible.find(r => tableManager.rowKey(r) === key) || songs.raw.find(r => tableManager.rowKey(r) === key);
+    const data = songs.visible.find(r => tableManager.getKeyForRow(r) === key) || songs.raw.find(r => tableManager.getKeyForRow(r) === key);
     if (!data) return;
 
     this.$modal.data("key", key);
 
-    const index = songs.visible.findIndex(r => tableManager.rowKey(r) === key);
+    const index = songs.visible.findIndex(r => tableManager.getKeyForRow(r) === key);
     this.$title.html(`Song Details${index >= 0 ? ` <span class="text-muted small ms-2">#${index + 1}</span>` : ""}`);
 
     this.$infoJson.text(JSON.stringify(data, null, 2));

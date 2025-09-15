@@ -1,9 +1,9 @@
 class RowComponent {
   // Initialize a data row with song data, index, and optional configuration
-  constructor(data, index, options = {}) {
+  constructor(data, index, key) {
     this.data = data;
     this.index = index;
-    this.options = options;
+    this.key = key;
     this.$tableElement = null;
     this.$cardElement = null;
   }
@@ -27,7 +27,7 @@ class RowComponent {
   // Build and return a complete table row element with all cells and event listeners
   createTableRow() {
     const $tr = $("<tr>")
-      .attr("data-key", this.getKey())
+      .attr("data-key", this.key)
       .attr("data-hq", this.data.HQ || "")
       .attr("data-mq", this.data.MQ || "")
       .attr("data-mp3", this.data.audio || "");
@@ -50,7 +50,7 @@ class RowComponent {
 
     const $card = $("<div>")
       .addClass("result-card")
-      .attr("data-key", this.getKey())
+      .attr("data-key", this.key)
       .html(`
         <div class="rc-header">
           <div class="rc-head-left">
@@ -231,7 +231,6 @@ class RowComponent {
 
   // Update a specific link label ("720" | "480" | "MP3") with success/error styling
   updateLinkLabelStatus(label, isOk) {
-    if (!this.$tableElement) return;
     const $linksCell = this.$tableElement.find('td[data-col="links"]');
     const $label = $linksCell.find(`.link-label[data-label="${label}"]`);
     if (!$label.length) return;
@@ -239,18 +238,25 @@ class RowComponent {
     $label.toggleClass("text-danger", !Boolean(isOk));
   }
 
+  // Mark or unmark the ANN Song ID cell as duplicate (red text)
+  setAnnSongIdDuplicate(isDuplicate) {
+    const $cell = this.$tableElement.find('td[data-col="annSongId"]');
+    if (!$cell.length) return;
+    $cell.toggleClass("text-danger fw-bold", Boolean(isDuplicate));
+  }
+
   // Attach event listeners to table row elements for user interactions
   setupTableEventListeners($element) {
     $element.on("click", (e) => {
       const $target = $(e.target);
       if ($target.closest(".js-play-track").length) {
-        eventBus.emit("song:play", this.getKey());
+        eventBus.emit("song:play", this.key);
       } else if ($target.closest(".js-add-to-playlist").length) {
-        eventBus.emit("playlist:add-song", { songId: this.getKey(), target: $target.closest(".js-add-to-playlist")[0] });
+        eventBus.emit("playlist:add-song", { songId: this.key, target: $target.closest(".js-add-to-playlist")[0] });
       } else if ($target.closest(".js-trash").length) {
-        eventBus.emit("song:remove", this.getKey());
+        eventBus.emit("song:remove", this.key);
       } else if ($target.closest(".js-info").length) {
-        eventBus.emit("song:show-info", this.getKey());
+        eventBus.emit("song:show-info", this.key);
       }
     });
   }
@@ -260,13 +266,13 @@ class RowComponent {
     $element.on("click", (e) => {
       const $target = $(e.target);
       if ($target.closest(".js-play-track").length) {
-        eventBus.emit("song:play", this.getKey());
+        eventBus.emit("song:play", this.key);
       } else if ($target.closest(".js-add-to-playlist").length) {
-        eventBus.emit("playlist:add-song", { songId: this.getKey(), target: $target.closest(".js-add-to-playlist")[0] });
+        eventBus.emit("playlist:add-song", { songId: this.key, target: $target.closest(".js-add-to-playlist")[0] });
       } else if ($target.closest(".js-trash").length) {
-        eventBus.emit("song:remove", this.getKey());
+        eventBus.emit("song:remove", this.key);
       } else if ($target.closest(".js-info").length) {
-        eventBus.emit("song:show-info", this.getKey());
+        eventBus.emit("song:show-info", this.key);
       }
     });
   }
@@ -274,7 +280,7 @@ class RowComponent {
   // Update play button visual states for both table and card views
   updatePlayButtonState() {
     const currentSongId = appState.getStateSlice("audio.currentSongId");
-    const isCurrent = currentSongId === this.getKey();
+    const isCurrent = currentSongId === this.key;
     const isPlaying = audioPlayer.isPlaying();
 
     [this.$tableElement, this.$cardElement].forEach($el => {
@@ -290,11 +296,6 @@ class RowComponent {
   setVisible(isVisible) {
     this.$tableElement.toggleClass("d-none", !isVisible);
     this.$cardElement.toggleClass("d-none", !isVisible);
-  }
-
-  // Generate a unique key for this data row based on ANN ID and Song ID
-  getKey() {
-    return `${this.data.annId}-${this.data.annSongId}`;
   }
 
   // Check if this data row has any available audio or video sources
