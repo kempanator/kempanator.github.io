@@ -1,5 +1,5 @@
 class RowComponent {
-  // Initialize a data row with song data, index, and optional configuration
+  // Initialize a data row with song data, index, and key
   constructor(data, index, key) {
     this.data = data;
     this.index = index;

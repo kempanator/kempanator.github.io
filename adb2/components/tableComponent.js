@@ -103,6 +103,14 @@ class TableComponent {
     // Clear existing content
     this.$cardContainer.empty();
 
+    // Clear cached card elements
+    this.rows.forEach(row => {
+      if (row.$cardElement) {
+        row.$cardElement.remove();
+        row.$cardElement = null;
+      }
+    });
+
     // Get sorted rows
     const sortedRows = this.getSortedRows();
 
