@@ -237,6 +237,9 @@ class TableManager {
     this.tableState.manualOrderActive = true;
     this.tableState.sort = { column: null, dir: null };
 
+    // Ensure key resolver is set (handles first-time append into empty table)
+    this.table.setKeyResolver((row) => this.getKeyForRow(row));
+
     // Add new rows to table
     appendedWithKeys.forEach((rowData, index) => {
       const actualIndex = this.state.visible.length - appendedWithKeys.length + index;
