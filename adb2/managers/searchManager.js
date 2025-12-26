@@ -157,19 +157,48 @@ class SearchManager {
 
   // Parses a comma-separated list of IDs
   parseIdList(query, idType) {
-    const ids = query.split(",").map(s => s.trim()).filter(Boolean);
+    const MAX_IDS = 500;
+    if (!query) return [];
 
-    if (ids.some(id => !/^\d+$/.test(id))) {
-      showAlert(`${idType} must be numeric (comma-separated).`, "warning");
-      return null;
+    const segments = String(query)
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const parsedIds = [];
+    for (const raw of segments) {
+      const segment = raw.replace(/\s*-\s*/, "-");
+      const rangeMatch = /^(\d+)-(\d+)$/.exec(segment);
+      if (rangeMatch) {
+        const start = Number(rangeMatch[1]);
+        const end = Number(rangeMatch[2]);
+        if (start > end) {
+          showAlert(`${idType} ranges must be ascending.`, "warning");
+          return null;
+        }
+        const size = end - start + 1;
+        if (parsedIds.length + size > MAX_IDS) {
+          showAlert(`Too many ${idType} (max ${MAX_IDS}).`, "warning");
+          return null;
+        }
+        for (let i = start; i <= end; i += 1) parsedIds.push(i);
+        continue;
+      }
+
+      if (!/^\d+$/.test(segment)) {
+        showAlert(`${idType} must be numeric or ranges (comma-separated).`, "warning");
+        return null;
+      }
+
+      if (parsedIds.length + 1 > MAX_IDS) {
+        showAlert(`Too many ${idType} (max ${MAX_IDS}).`, "warning");
+        return null;
+      }
+
+      parsedIds.push(Number(segment));
     }
 
-    if (ids.length > 500) {
-      showAlert(`Too many ${idType} (max 500).`, "warning");
-      return null;
-    }
-
-    return ids.map(Number);
+    return parsedIds;
   }
 
   // Makes a search request to the API and applies client-side case filtering if needed
