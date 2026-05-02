@@ -5,12 +5,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ADB2</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png?v=9f0d4b16" />
+  <link rel="icon" type="image/png" href="assets/favicon.png?v=a96c6ba3" />
   <!-- Vendor CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" />
   <!-- App CSS -->
-  <link href="style.css?v=9f0d4b16" rel="stylesheet" />
+  <link href="style.css?v=a96c6ba3" rel="stylesheet" />
 </head>
 
 <body>
@@ -525,6 +525,15 @@
                       <button type="button" class="segment" data-value="naedist">naedist</button>
                     </div>
                   </div>
+                  <div class="col-12 col-md-6">
+                    <label for="settingDefaultAudioVolume" class="form-label">Default player volume</label>
+                    <div class="d-flex align-items-center gap-2">
+                      <input type="range" class="form-range flex-grow-1" id="settingDefaultAudioVolume"
+                        min="0" max="100" step="1" value="100" aria-valuemin="0" aria-valuemax="100">
+                      <span id="settingDefaultAudioVolumeValue" class="text-muted small text-nowrap"
+                        style="min-width: 3rem;">100%</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="mt-4">
                   <h6>Hotkeys</h6>
@@ -996,27 +1005,27 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- App JS -->
-  <script src="core/config.js?v=9f0d4b16"></script>
-  <script src="core/eventBus.js?v=9f0d4b16"></script>
-  <script src="core/appState.js?v=9f0d4b16"></script>
-  <script src="components/infoModal.js?v=9f0d4b16"></script>
-  <script src="components/audioPlayer.js?v=9f0d4b16"></script>
-  <script src="components/rowComponent.js?v=9f0d4b16"></script>
-  <script src="components/tableComponent.js?v=9f0d4b16"></script>
-  <script src="components/settingsModal.js?v=9f0d4b16"></script>
-  <script src="components/playlistModal.js?v=9f0d4b16"></script>
-  <script src="components/playlistSelectionModal.js?v=9f0d4b16"></script>
-  <script src="components/toolbar.js?v=9f0d4b16"></script>
-  <script src="components/statsModal.js?v=9f0d4b16"></script>
-  <script src="components/alertComponent.js?v=9f0d4b16"></script>
-  <script src="managers/settingsManager.js?v=9f0d4b16"></script>
-  <script src="managers/hotkeyManager.js?v=9f0d4b16"></script>
-  <script src="managers/ioManager.js?v=9f0d4b16"></script>
-  <script src="managers/tableManager.js?v=9f0d4b16"></script>
-  <script src="managers/searchManager.js?v=9f0d4b16"></script>
-  <script src="managers/playlistManager.js?v=9f0d4b16"></script>
-  <script src="managers/statsManager.js?v=9f0d4b16"></script>
-  <script src="main.js?v=9f0d4b16"></script>
+  <script src="core/config.js?v=a96c6ba3"></script>
+  <script src="core/eventBus.js?v=a96c6ba3"></script>
+  <script src="core/appState.js?v=a96c6ba3"></script>
+  <script src="components/infoModal.js?v=a96c6ba3"></script>
+  <script src="components/audioPlayer.js?v=a96c6ba3"></script>
+  <script src="components/rowComponent.js?v=a96c6ba3"></script>
+  <script src="components/tableComponent.js?v=a96c6ba3"></script>
+  <script src="components/settingsModal.js?v=a96c6ba3"></script>
+  <script src="components/playlistModal.js?v=a96c6ba3"></script>
+  <script src="components/playlistSelectionModal.js?v=a96c6ba3"></script>
+  <script src="components/toolbar.js?v=a96c6ba3"></script>
+  <script src="components/statsModal.js?v=a96c6ba3"></script>
+  <script src="components/alertComponent.js?v=a96c6ba3"></script>
+  <script src="managers/settingsManager.js?v=a96c6ba3"></script>
+  <script src="managers/hotkeyManager.js?v=a96c6ba3"></script>
+  <script src="managers/ioManager.js?v=a96c6ba3"></script>
+  <script src="managers/tableManager.js?v=a96c6ba3"></script>
+  <script src="managers/searchManager.js?v=a96c6ba3"></script>
+  <script src="managers/playlistManager.js?v=a96c6ba3"></script>
+  <script src="managers/statsManager.js?v=a96c6ba3"></script>
+  <script src="main.js?v=a96c6ba3"></script>
 
 </body>
 

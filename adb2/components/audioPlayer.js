@@ -335,6 +335,13 @@ class AudioPlayer {
     this.audio.volume = Math.max(0, Math.min(1, volume));
   }
 
+  // Set volume from Settings (0–100); call after settingsManager has loaded (e.g. DOM ready).
+  applyDefaultVolumeFromSettings() {
+    const pct = settingsManager.get("defaultAudioVolume");
+    const n = typeof pct === "number" && Number.isFinite(pct) ? pct : 100;
+    this.setVolume(Math.max(0, Math.min(100, Math.round(n))) / 100);
+  }
+
   // Check if audio is muted
   isMuted() {
     return this.audio.muted;

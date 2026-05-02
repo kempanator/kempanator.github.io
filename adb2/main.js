@@ -40,6 +40,8 @@ $(document).ready(function () {
   // Initialize App State with current settings
   appState.updateStateSlice("settings", () => settingsManager.settings);
 
+  audioPlayer.applyDefaultVolumeFromSettings();
+
   // Apply initial UI from current settings
   settingsModal.applyToUI();
 

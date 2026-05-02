@@ -138,6 +138,7 @@ class SettingsManager {
     // Reset to default settings
     this.reset();
     settingsModal.applyToUI();
+    audioPlayer.applyDefaultVolumeFromSettings();
     this.applyTheme();
 
     // Reset column order and visibility
@@ -190,6 +191,7 @@ class SettingsManager {
         this.update(sanitized, false); // Use update method instead of direct assignment
         this.save();
         settingsModal.applyToUI();
+        audioPlayer.applyDefaultVolumeFromSettings();
         this.applyTheme();
         showAlert("Settings imported successfully", "success");
 
@@ -238,6 +240,10 @@ class SettingsManager {
     if (!validLang.has(out.language)) out.language = this.defaults.language;
     if (!validSearchMode.has(out.searchMode)) out.searchMode = this.defaults.searchMode;
     if (typeof out.zebraStripe !== "boolean") out.zebraStripe = this.defaults.zebraStripe;
+
+    let defVol = Number(out.defaultAudioVolume);
+    if (!Number.isFinite(defVol)) defVol = this.defaults.defaultAudioVolume;
+    out.defaultAudioVolume = Math.max(0, Math.min(100, Math.round(defVol)));
 
     if (!out.hotkeys || typeof out.hotkeys !== "object") {
       out.hotkeys = { ...this.defaults.hotkeys };

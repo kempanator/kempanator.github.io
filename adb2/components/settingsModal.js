@@ -8,6 +8,8 @@ class SettingsModal {
     this.$resetColsOrder = $("#btnResetColumnOrder");
     this.$resetColsVisibility = $("#btnResetColumns");
     this.$zebraStripe = $("#settingZebraStripe");
+    this.$defaultAudioVolume = $("#settingDefaultAudioVolume");
+    this.$defaultAudioVolumeValue = $("#settingDefaultAudioVolumeValue");
     this.$importSettings = $("#btnImportSettings");
     this.$exportSettings = $("#btnExportSettings");
     this.$exportPlaylists = $("#btnExportPlaylists");
@@ -79,6 +81,13 @@ class SettingsModal {
       tableManager.table.applyZebraStripe();
     });
 
+    this.$defaultAudioVolume.on("input", (e) => {
+      const v = Number(e.target.value);
+      settingsManager.set("defaultAudioVolume", v);
+      this.$defaultAudioVolumeValue.text(`${v}%`);
+      audioPlayer.setVolume(v / 100);
+    });
+
     // Import/Export/Reset actions
     this.$importSettings.on("click", () => { this.$settingsFileInput.trigger("click"); });
     this.$exportSettings.on("click", () => settingsManager.exportSettings());
@@ -118,6 +127,10 @@ class SettingsModal {
 
     // Initialize zebra stripe toggle
     this.$zebraStripe.prop("checked", settingsManager.settings.zebraStripe);
+
+    const defVol = settingsManager.settings.defaultAudioVolume;
+    this.$defaultAudioVolume.val(defVol);
+    this.$defaultAudioVolumeValue.text(`${defVol}%`);
 
     // Refresh hotkey inputs
     hotkeyManager.refreshHotkeyInputs();

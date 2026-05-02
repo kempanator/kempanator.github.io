@@ -16,6 +16,7 @@ const DefaultSettings = {
   language: "english", // english | romaji
   searchMode: "simple", // simple | advanced
   zebraStripe: true, // zebra stripe styling for table rows
+  defaultAudioVolume: 100, // 0–100, applied to the audio element when the page loads
   hotkeys: { downloadJson: "", playPause: "", prev: "", next: "" },
   visibleColumns: {
     plus: true,
