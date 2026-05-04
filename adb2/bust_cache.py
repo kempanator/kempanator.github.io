@@ -43,7 +43,7 @@ def main():
   if args.dry_run:
     sys.stdout.write(out)
   else:
-    path.write_text(out, encoding="utf-8")
+    path.write_text(out, encoding="utf-8", newline="\n")
     print(f"Cache bust complete for {path} with version: {version}")
 
 if __name__ == "__main__":

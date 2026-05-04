@@ -40,6 +40,7 @@ $(document).ready(function () {
   // Initialize App State with current settings
   appState.updateStateSlice("settings", () => settingsManager.settings);
 
+  // Apply default volume from current settings
   audioPlayer.applyDefaultVolumeFromSettings();
 
   // Apply initial UI from current settings

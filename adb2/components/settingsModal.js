@@ -81,6 +81,7 @@ class SettingsModal {
       tableManager.table.applyZebraStripe();
     });
 
+    // Default audio volume input change
     this.$defaultAudioVolume.on("input", (e) => {
       const v = Number(e.target.value);
       settingsManager.set("defaultAudioVolume", v);
@@ -128,6 +129,7 @@ class SettingsModal {
     // Initialize zebra stripe toggle
     this.$zebraStripe.prop("checked", settingsManager.settings.zebraStripe);
 
+    // Initialize default audio volume
     const defVol = settingsManager.settings.defaultAudioVolume;
     this.$defaultAudioVolume.val(defVol);
     this.$defaultAudioVolumeValue.text(`${defVol}%`);

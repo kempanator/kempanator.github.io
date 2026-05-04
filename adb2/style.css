@@ -1,3 +1,9 @@
+/* Global overrides */
+:root {
+  --btn-playing-bg: var(--bs-success);
+}
+
+/* Dark theme overrides */
 :root[data-bs-theme="dark"] {
   --bs-body-bg: #111111;
   --bs-body-color: #E0E0E0;
@@ -7,11 +13,11 @@
   --bs-border-color: #2A2A2A;
   --bs-table-bg: transparent;
   --bs-primary: #6C757D;
-  /* neutral accent */
 }
 
-:root {
-  --btn-playing-bg: var(--bs-success);
+/* Bootstrap .form-range track uses var(--bs-secondary-bg); override per-slider so rails read on dark BGs */
+:root[data-bs-theme="dark"] input[type="range"] {
+  --bs-secondary-bg: #2A2A2A;
 }
 
 /* Keep content clear of sticky player when shown */
