@@ -171,7 +171,7 @@ class SettingsModal {
     const html = columnOrder.map(col => `
         <div class="list-group-item d-flex align-items-center column-item ${visibleColumns[col] ? 'visible' : 'hidden'}" data-column="${col}">
           <span class="js-col-grab drag-handle me-2" title="Drag to reorder">
-            <i class="fa-solid fa-grip-vertical text-muted"></i>
+            <i class="fa-solid fa-grid-vertical text-muted"></i>
           </span>
           <span class="flex-grow-1">${columnLabels[col] || col}</span>
           <span class="visibility-indicator">

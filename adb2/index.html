@@ -5,12 +5,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ADB2</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png?v=79c5963a" />
+  <link rel="icon" type="image/png" href="assets/favicon.png?v=d868bc8f" />
   <!-- Vendor CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" rel="stylesheet" />
   <!-- App CSS -->
-  <link href="style.css?v=79c5963a" rel="stylesheet" />
+  <link href="style.css?v=d868bc8f" rel="stylesheet" />
 </head>
 
 <body>
@@ -29,7 +29,7 @@
         </button>
         <button id="btnSettings" class="btn btn-sm btn-outline-secondary navbar-btn-square" data-bs-toggle="modal"
           data-bs-target="#settingsModal" aria-label="Settings" title="Settings">
-          <i class="fa-solid fa-cog"></i>
+          <i class="fa-solid fa-gear"></i>
         </button>
       </div>
     </div>
@@ -53,6 +53,7 @@
             <option value="MAL">MAL ID</option>
             <option value="ANN_SONG">ANN Song ID</option>
             <option value="AMQ_SONG">AMQ Song ID</option>
+            <option value="RANDOM">Random # Songs</option>
           </select>
           <input id="searchQuery" type="text" class="form-control form-control-sm flex-grow-1"
             placeholder="Search anime, artist, song, composer" />
@@ -89,12 +90,12 @@
           </button>
           <ul class="dropdown-menu">
             <li><button id="btnStats" class="dropdown-item" type="button" data-bs-toggle="modal"
-                data-bs-target="#statsModal"><i class="fa-solid fa-chart-bar me-2"></i>Statistics</button></li>
+                data-bs-target="#statsModal"><i class="fa-solid fa-bar-chart me-2"></i>Statistics</button></li>
             <li>
               <hr class="dropdown-divider">
             </li>
             <li><button id="btnImportFile" class="dropdown-item" type="button"><i
-                  class="fa-solid fa-file-import me-2"></i>Import File</button></li>
+                  class="fa-solid fa-arrow-right-to-file me-2"></i>Import File</button></li>
             <li>
               <hr class="dropdown-divider">
             </li>
@@ -255,6 +256,46 @@
                 <label class="form-check-label" for="chkInstrumental">Instrumental</label>
               </div>
             </div>
+
+            <div class="col-12">
+              <hr class="my-0" />
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkTV" checked />
+                <label class="form-check-label" for="chkTV">TV</label>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkMovie" checked />
+                <label class="form-check-label" for="chkMovie">Movie</label>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkOVA" checked />
+                <label class="form-check-label" for="chkOVA">OVA</label>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkONA" checked />
+                <label class="form-check-label" for="chkONA">ONA</label>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkSpecial" checked />
+                <label class="form-check-label" for="chkSpecial">Special</label>
+              </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkDoujin" checked />
+                <label class="form-check-label" for="chkDoujin">Doujin</label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -279,7 +320,7 @@
             <div class="fw-semibold mb-2">Table Operations</div>
             <div class="d-flex gap-2 flex-wrap">
               <button id="btnShuffle" class="btn btn-sm btn-outline-secondary" title="Shuffle current visible rows">
-                <i class="fa-solid fa-shuffle me-1"></i>Shuffle Results
+                <i class="fa-solid fa-random me-1"></i>Shuffle Results
               </button>
               <button id="btnReverse" class="btn btn-sm btn-outline-secondary" title="Reverse current visible rows">
                 <i class="fa-solid fa-arrows-up-down me-1"></i>Reverse Order
@@ -293,7 +334,7 @@
             <div class="fw-semibold mb-2">Tasks</div>
             <div class="d-flex gap-2 flex-wrap">
               <button id="btnCheckLinks" class="btn btn-sm btn-outline-secondary" title="Validate links for 720/480/MP3">
-                <i class="fa-solid fa-link me-1"></i>Check Links
+                <i class="fa-solid fa-chain me-1"></i>Check Links
               </button>
               <button id="btnRebuildTable" class="btn btn-sm btn-outline-secondary" title="Fetch table songs by ANN Song IDs and rebuild with fresh data">
                 <i class="fa-solid fa-rotate me-1"></i>Rebuild Table
@@ -472,7 +513,7 @@
             <li class="nav-item" role="presentation">
               <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general"
                 type="button" role="tab" aria-controls="general" aria-selected="true">
-                <i class="fa-solid fa-cog me-1"></i>General
+                <i class="fa-solid fa-gear me-1"></i>General
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -484,7 +525,7 @@
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button"
                 role="tab" aria-controls="about" aria-selected="false">
-                <i class="fa-solid fa-info-circle me-1"></i>About
+                <i class="fa-solid fa-circle-info me-1"></i>About
               </button>
             </li>
           </ul>
@@ -560,16 +601,16 @@
                   <h6>Data Management</h6>
                   <div class="d-flex gap-2 flex-wrap">
                     <button id="btnImportSettings" class="btn btn-sm btn-outline-primary">
-                      <i class="fa-solid fa-file-import me-1"></i>Import
+                      <i class="fa-solid fa-arrow-right-to-file me-1"></i>Import
                     </button>
                     <button id="btnExportSettings" class="btn btn-sm btn-outline-secondary">
-                      <i class="fa-solid fa-file-export me-1"></i>Export Settings
+                      <i class="fa-solid fa-arrow-right-from-file me-1"></i>Export Settings
                     </button>
                     <button id="btnExportPlaylists" class="btn btn-sm btn-outline-secondary">
-                      <i class="fa-solid fa-file-export me-1"></i>Export Playlists
+                      <i class="fa-solid fa-arrow-right-from-file me-1"></i>Export Playlists
                     </button>
                     <button id="btnResetAllSettings" class="btn btn-sm btn-outline-warning">
-                      <i class="fa-solid fa-rotate-left me-1"></i>Reset All Settings
+                      <i class="fa-solid fa-arrow-rotate-left me-1"></i>Reset All Settings
                     </button>
                     <button id="btnDeleteAllPlaylists" class="btn btn-sm btn-outline-danger">
                       <i class="fa-solid fa-trash me-1"></i>Delete All Playlists
@@ -603,7 +644,7 @@
                 </div>
                 <div class="mt-3 text-center">
                   <button id="btnResetColumnOrder" class="btn btn-sm btn-outline-secondary me-2">
-                    <i class="fa-solid fa-rotate-left me-1"></i>Reset Order
+                    <i class="fa-solid fa-arrow-rotate-left me-1"></i>Reset Order
                   </button>
                   <button id="btnResetColumns" class="btn btn-sm btn-outline-secondary">
                     <i class="fa-solid fa-eye-slash me-1"></i>Reset Visibility
@@ -627,7 +668,7 @@
                           <i class="fa-solid fa-code-branch me-2 text-primary"></i>
                           <div>
                             <small class="text-muted">Version</small>
-                            <div><strong>1.2</strong></div>
+                            <div><strong>1.3</strong></div>
                           </div>
                         </div>
                       </div>
@@ -745,7 +786,7 @@
             <div class="card-header">
               <h6 class="mb-0">
                 Save Current Results as Playlist
-                <i class="fa-solid fa-info-circle ms-2" data-bs-toggle="popover" data-bs-trigger="hover"
+                <i class="fa-solid fa-circle-info ms-2" data-bs-toggle="popover" data-bs-trigger="hover"
                   data-bs-placement="top"
                   data-bs-content="Playlists are saved as ANN Song IDs in local storage. When loading a playlist, the app sends API requests to fetch full song information for each ID."></i>
               </h6>
@@ -757,7 +798,7 @@
                 </div>
                 <div class="col-md-4">
                   <button type="button" class="btn btn-primary w-100" id="btnSavePlaylist">
-                    <i class="fa-solid fa-save me-1"></i>Save Playlist
+                    <i class="fa-solid fa-floppy-disk me-1"></i>Save Playlist
                   </button>
                 </div>
               </div>
@@ -794,7 +835,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="fa-solid fa-chart-bar me-2"></i>Table Statistics
+            <i class="fa-solid fa-bar-chart me-2"></i>Table Statistics
           </h5>
           <div class="ms-auto d-flex align-items-center gap-2">
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -816,7 +857,7 @@
               <div class="col-6 col-md-3">
                 <div class="card border-0 bg-success bg-opacity-10">
                   <div class="card-body text-center">
-                    <i class="fa-solid fa-tv text-success fa-2x mb-2"></i>
+                    <i class="fa-solid fa-television text-success fa-2x mb-2"></i>
                     <h4 class="mb-1" id="totalAnime">-</h4>
                     <small class="text-muted">Total Anime</small>
                   </div>
@@ -834,7 +875,7 @@
               <div class="col-6 col-md-3">
                 <div class="card border-0 bg-warning bg-opacity-10">
                   <div class="card-body text-center">
-                    <i class="fa-solid fa-calendar-days text-warning fa-2x mb-2"></i>
+                    <i class="fa-solid fa-calendar-alt text-warning fa-2x mb-2"></i>
                     <h4 class="mb-1" id="totalSeasons">-</h4>
                     <small class="text-muted">Total Seasons</small>
                   </div>
@@ -873,7 +914,7 @@
                       </h6>
                       <button id="btnSongTypesToggle" class="btn btn-sm btn-outline-secondary"
                         title="Toggle chart/numbers">
-                        <i class="fa-solid fa-list-ol"></i>
+                        <i class="fa-solid fa-list-1-2"></i>
                       </button>
                     </div>
                     <div class="card-body">
@@ -891,7 +932,7 @@
                       </h6>
                       <button id="btnSongCategoriesToggle" class="btn btn-sm btn-outline-secondary"
                         title="Toggle chart/numbers">
-                        <i class="fa-solid fa-list-ol"></i>
+                        <i class="fa-solid fa-list-1-2"></i>
                       </button>
                     </div>
                     <div class="card-body">
@@ -905,11 +946,11 @@
                   <div class="card h-100">
                     <div class="card-header d-flex align-items-center justify-content-between">
                       <h6 class="mb-0">
-                        <i class="fa-solid fa-broadcast-tower me-2"></i>Broadcast Types Distribution
+                        <i class="fa-solid fa-tower-broadcast me-2"></i>Broadcast Types Distribution
                       </h6>
                       <button id="btnBroadcastTypesToggle" class="btn btn-sm btn-outline-secondary"
                         title="Toggle chart/numbers">
-                        <i class="fa-solid fa-list-ol"></i>
+                        <i class="fa-solid fa-list-1-2"></i>
                       </button>
                     </div>
                     <div class="card-body">
@@ -927,7 +968,7 @@
                       </h6>
                       <button id="btnAnimeTypesToggle" class="btn btn-sm btn-outline-secondary"
                         title="Toggle chart/numbers">
-                        <i class="fa-solid fa-list-ol"></i>
+                        <i class="fa-solid fa-list-1-2"></i>
                       </button>
                     </div>
                     <div class="card-body">
@@ -980,7 +1021,7 @@
                   <div class="card h-100">
                     <div class="card-header">
                       <h6 class="mb-0">
-                        <i class="fa-solid fa-tv me-2"></i>Top Anime
+                        <i class="fa-solid fa-television me-2"></i>Top Anime
                       </h6>
                     </div>
                     <div class="card-body">
@@ -1001,31 +1042,31 @@
 
   <!-- Vendor JS -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- App JS -->
-  <script src="core/config.js?v=79c5963a"></script>
-  <script src="core/eventBus.js?v=79c5963a"></script>
-  <script src="core/appState.js?v=79c5963a"></script>
-  <script src="components/infoModal.js?v=79c5963a"></script>
-  <script src="components/audioPlayer.js?v=79c5963a"></script>
-  <script src="components/rowComponent.js?v=79c5963a"></script>
-  <script src="components/tableComponent.js?v=79c5963a"></script>
-  <script src="components/settingsModal.js?v=79c5963a"></script>
-  <script src="components/playlistModal.js?v=79c5963a"></script>
-  <script src="components/playlistSelectionModal.js?v=79c5963a"></script>
-  <script src="components/toolbar.js?v=79c5963a"></script>
-  <script src="components/statsModal.js?v=79c5963a"></script>
-  <script src="components/alertComponent.js?v=79c5963a"></script>
-  <script src="managers/settingsManager.js?v=79c5963a"></script>
-  <script src="managers/hotkeyManager.js?v=79c5963a"></script>
-  <script src="managers/ioManager.js?v=79c5963a"></script>
-  <script src="managers/tableManager.js?v=79c5963a"></script>
-  <script src="managers/searchManager.js?v=79c5963a"></script>
-  <script src="managers/playlistManager.js?v=79c5963a"></script>
-  <script src="managers/statsManager.js?v=79c5963a"></script>
-  <script src="main.js?v=79c5963a"></script>
+  <script src="core/config.js?v=d868bc8f"></script>
+  <script src="core/eventBus.js?v=d868bc8f"></script>
+  <script src="core/appState.js?v=d868bc8f"></script>
+  <script src="components/infoModal.js?v=d868bc8f"></script>
+  <script src="components/audioPlayer.js?v=d868bc8f"></script>
+  <script src="components/rowComponent.js?v=d868bc8f"></script>
+  <script src="components/tableComponent.js?v=d868bc8f"></script>
+  <script src="components/settingsModal.js?v=d868bc8f"></script>
+  <script src="components/playlistModal.js?v=d868bc8f"></script>
+  <script src="components/playlistSelectionModal.js?v=d868bc8f"></script>
+  <script src="components/toolbar.js?v=d868bc8f"></script>
+  <script src="components/statsModal.js?v=d868bc8f"></script>
+  <script src="components/alertComponent.js?v=d868bc8f"></script>
+  <script src="managers/settingsManager.js?v=d868bc8f"></script>
+  <script src="managers/hotkeyManager.js?v=d868bc8f"></script>
+  <script src="managers/ioManager.js?v=d868bc8f"></script>
+  <script src="managers/tableManager.js?v=d868bc8f"></script>
+  <script src="managers/searchManager.js?v=d868bc8f"></script>
+  <script src="managers/playlistManager.js?v=d868bc8f"></script>
+  <script src="managers/statsManager.js?v=d868bc8f"></script>
+  <script src="main.js?v=d868bc8f"></script>
 
 </body>
 

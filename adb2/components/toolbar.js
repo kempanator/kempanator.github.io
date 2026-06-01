@@ -40,6 +40,12 @@ class Toolbar {
     this.$chkCharacter = $("#chkCharacter");
     this.$chkChanting = $("#chkChanting");
     this.$chkInstrumental = $("#chkInstrumental");
+    this.$chkTV = $("#chkTV");
+    this.$chkMovie = $("#chkMovie");
+    this.$chkOVA = $("#chkOVA");
+    this.$chkONA = $("#chkONA");
+    this.$chkSpecial = $("#chkSpecial");
+    this.$chkDoujin = $("#chkDoujin");
     // Table Operations
     this.$btnShuffle = $("#btnShuffle");
     this.$btnReverse = $("#btnReverse");
@@ -155,7 +161,13 @@ class Toolbar {
       standard: this.$chkStandard.is(":checked"),
       character: this.$chkCharacter.is(":checked"),
       chanting: this.$chkChanting.is(":checked"),
-      instrumental: this.$chkInstrumental.is(":checked")
+      instrumental: this.$chkInstrumental.is(":checked"),
+      tv_filter: this.$chkTV.is(":checked"),
+      movie_filter: this.$chkMovie.is(":checked"),
+      ova_filter: this.$chkOVA.is(":checked"),
+      ona_filter: this.$chkONA.is(":checked"),
+      special_filter: this.$chkSpecial.is(":checked"),
+      doujin_filter: this.$chkDoujin.is(":checked")
     };
   }
 
@@ -189,7 +201,7 @@ class Toolbar {
       this.$btnCheckLinks.removeClass("btn-outline-secondary").addClass("btn-outline-danger");
       this.$btnCheckLinks.attr("title", "Click to stop link validation");
     } else {
-      this.$btnCheckLinks.html('<i class="fa-solid fa-link me-1"></i>Check Links');
+      this.$btnCheckLinks.html('<i class="fa-solid fa-chain me-1"></i>Check Links');
       this.$btnCheckLinks.removeClass("btn-outline-danger").addClass("btn-outline-secondary");
       this.$btnCheckLinks.attr("title", "Validate links for 720/480/MP3");
     }
@@ -232,7 +244,8 @@ class Toolbar {
       ANN: "Enter ANN ID(s), comma-separated",
       ANN_SONG: "Enter ANN Song ID(s), comma-separated",
       AMQ_SONG: "Enter AMQ Song ID(s), comma-separated",
-      MAL: "Enter MAL ID(s), comma-separated"
+      MAL: "Enter MAL ID(s), comma-separated",
+      RANDOM: "Number of random songs (1–500)",
     };
     const placeholder = placeholderMap[scope] || "Search anime, artist, song, composer";
     this.$searchQuery.attr("placeholder", placeholder);

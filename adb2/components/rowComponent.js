@@ -59,7 +59,7 @@ class RowComponent {
           </div>
           <div class="rc-actions">
             <button class="btn btn-sm btn-outline-primary js-play-track" ${hasAnySource ? "" : "disabled"}><i class="fa-solid fa-play"></i></button>
-            <button class="btn btn-sm btn-outline-warning js-add-to-playlist"><i class="fa-solid fa-plus"></i></button>
+            <button class="btn btn-sm btn-outline-warning js-add-to-playlist"><i class="fa-solid fa-add"></i></button>
             <button class="btn btn-sm btn-outline-danger js-trash"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>
@@ -140,9 +140,9 @@ class RowComponent {
     // Action: Play, Add to Playlist, Trash, Drag (drag handle AFTER trash)
     const $tdAct = $("<td>").addClass("nw").html(`
       <button class="btn btn-sm btn-outline-primary js-play-track me-1" title="Play" ${hasAnySource ? "" : "disabled"}><i class="fa-solid fa-play"></i></button>
-      <button class="btn btn-sm btn-outline-warning js-add-to-playlist me-1" title="Add to Playlist"><i class="fa-solid fa-plus"></i></button>
+      <button class="btn btn-sm btn-outline-warning js-add-to-playlist me-1" title="Add to Playlist"><i class="fa-solid fa-add"></i></button>
       <button class="btn btn-sm btn-outline-danger js-trash me-2" title="Remove"><i class="fa-solid fa-trash"></i></button>
-      <span class="js-grab drag-handle" title="Drag to reorder"><i class="fa-solid fa-grip-vertical"></i></span>
+      <span class="js-grab drag-handle" title="Drag to reorder"><i class="fa-solid fa-grid-vertical"></i></span>
     `);
 
     return {

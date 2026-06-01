@@ -32,7 +32,9 @@ class SearchManager {
         "opening_filter", "ending_filter", "insert_filter",
         "max_other_artist", "group_granularity", "and_logic",
         "ignore_duplicate", "normal_broadcast", "dub", "rebroadcast",
-        "standard", "character", "chanting", "instrumental"
+        "standard", "character", "chanting", "instrumental",
+        "tv_filter", "movie_filter", "ova_filter", "ona_filter",
+        "special_filter", "doujin_filter"
       ];
       // Respect result mode in payload if present
       const isAppend = payload.result_mode === "append";
@@ -81,7 +83,7 @@ class SearchManager {
     }
 
     const body = this.buildAdvancedSearchBody(anime, artist, song, composer, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/search_request`, body, isAppend, Boolean(toggles.match_case));
+    this.makeSearchRequest(`${API_BASE}/api/search_request`, body, isAppend);
   }
 
   // Performs simple search based on scope and query
@@ -99,11 +101,12 @@ class SearchManager {
       this.handleAmqSongSearch(query, isAppend, toggles);
     } else if (scope === "MAL") {
       this.handleMalSearch(query, isAppend, toggles);
+    } else if (scope === "RANDOM") {
+      this.handleRandomSearch(query, isAppend, toggles);
     } else {
       // All/Anime/Artist/Song/Composer => search_request
       const body = this.buildSearchBody(scope, query, toggles);
-      const allowMatchCase = ["All", "Anime", "Artist", "Song", "Composer"].includes(scope);
-      this.makeSearchRequest(`${API_BASE}/api/search_request`, body, isAppend, allowMatchCase && Boolean(toggles.match_case));
+      this.makeSearchRequest(`${API_BASE}/api/search_request`, body, isAppend);
     }
   }
 
@@ -116,7 +119,7 @@ class SearchManager {
     }
 
     const body = this.buildSeasonBody(seasonStr, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/season_request`, body, isAppend, false);
+    this.makeSearchRequest(`${API_BASE}/api/season_request`, body, isAppend);
   }
 
   // Handles ANN ID search
@@ -125,7 +128,7 @@ class SearchManager {
     if (!ids) return;
 
     const body = this.buildAnnBody(ids, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/ann_ids_request`, body, isAppend, false);
+    this.makeSearchRequest(`${API_BASE}/api/ann_ids_request`, body, isAppend);
   }
 
   // Handles ANN Song ID search
@@ -134,7 +137,7 @@ class SearchManager {
     if (!ids) return;
 
     const body = this.buildAnnSongIdsBody(ids, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/ann_song_ids_request`, body, isAppend, false);
+    this.makeSearchRequest(`${API_BASE}/api/ann_song_ids_request`, body, isAppend);
   }
 
   // Handles AMQ Song ID search
@@ -143,7 +146,7 @@ class SearchManager {
     if (!ids) return;
 
     const body = this.buildAmqSongIdsBody(ids, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/amq_song_ids_request`, body, isAppend, false);
+    this.makeSearchRequest(`${API_BASE}/api/amq_song_ids_request`, body, isAppend);
   }
 
   // Handles MAL ID search
@@ -152,7 +155,35 @@ class SearchManager {
     if (!ids) return;
 
     const body = this.buildMalBody(ids, toggles);
-    this.makeSearchRequest(`${API_BASE}/api/mal_ids_request`, body, isAppend, false);
+    this.makeSearchRequest(`${API_BASE}/api/mal_ids_request`, body, isAppend);
+  }
+
+  // Handles random song search
+  handleRandomSearch(query, isAppend, toggles) {
+    const n = this.parseRandomCount(query);
+    if (n === null) return;
+
+    const body = this.buildRandomBody(n, toggles);
+    this.makeSearchRequest(`${API_BASE}/api/get_n_random_songs`, body, isAppend);
+  }
+
+  // Parses random song count (1–500)
+  parseRandomCount(query) {
+    const trimmed = String(query || "").trim();
+    if (!trimmed) {
+      showAlert("Enter the number of random songs (1–500).", "warning");
+      return null;
+    }
+    if (!/^\d+$/.test(trimmed)) {
+      showAlert("Number of random songs must be a whole number from 1 to 500.", "warning");
+      return null;
+    }
+    const n = Number(trimmed);
+    if (n < 1 || n > 500) {
+      showAlert("Number of random songs must be between 1 and 500.", "warning");
+      return null;
+    }
+    return n;
   }
 
   // Parses a comma-separated list of IDs
@@ -201,75 +232,20 @@ class SearchManager {
     return parsedIds;
   }
 
-  // Makes a search request to the API and applies client-side case filtering if needed
-  makeSearchRequest(url, body, isAppend, matchCase) {
+  // Makes a search request to the API
+  makeSearchRequest(url, body, isAppend) {
     this.setLoading(true);
     this.postJson(url, body)
       .then(data => {
         const sortedByType = this.sortBySongType(data);
-        const searchTerms = this.extractTextSearchTermsFromBody(body);
-        const finalRows = matchCase && searchTerms.length > 0
-          ? this.filterCaseSensitiveForTextScopes(sortedByType, searchTerms)
-          : sortedByType;
         if (isAppend) {
-          tableManager.appendData(finalRows);
+          tableManager.appendData(sortedByType);
         } else {
-          tableManager.loadData(finalRows);
+          tableManager.loadData(sortedByType);
         }
       })
       .catch(err => this.onFetchError(err))
       .finally(() => this.setLoading(false));
-  }
-
-  // Derive text search terms from the request body for client-side case filtering
-  extractTextSearchTermsFromBody(body) {
-    const terms = [];
-    if (!body || typeof body !== "object") return terms;
-    const anime = body.anime_search_filter?.search;
-    const artist = body.artist_search_filter?.search;
-    const song = body.song_name_search_filter?.search;
-    const composer = body.composer_search_filter?.search;
-    if (anime) terms.push({ field: "anime", term: String(anime) });
-    if (artist) terms.push({ field: "artist", term: String(artist) });
-    if (song) terms.push({ field: "song", term: String(song) });
-    if (composer) terms.push({ field: "composer", term: String(composer) });
-    return terms;
-  }
-
-  // Apply case-sensitive filtering for text scopes (Anime/Artist/Song/Composer/All)
-  filterCaseSensitiveForTextScopes(rows, searchTerms) {
-    if (!Array.isArray(rows)) return rows;
-    if (searchTerms.length === 0) return rows;
-
-    return rows.filter(row => {
-      const matchesField = ({ field, term }) => {
-        let fieldValue = "";
-        switch (field) {
-          case "anime":
-            fieldValue = (row.animeENName || row.animeJPName || "").toString();
-            break;
-          case "artist":
-            fieldValue = (row.songArtist || "").toString();
-            break;
-          case "song":
-            fieldValue = (row.songName || "").toString();
-            break;
-          case "composer":
-            fieldValue = (row.songComposer || "").toString();
-            break;
-          default:
-            return false;
-        }
-        return fieldValue.includes(term);
-      };
-
-      // If terms span only the text fields (All), allow any to match; else require all
-      const onlyTextFields = searchTerms.every(st => ["anime", "artist", "song", "composer"].includes(st.field));
-      if (onlyTextFields && searchTerms.length > 1) {
-        return searchTerms.some(matchesField);
-      }
-      return searchTerms.every(matchesField);
-    });
   }
 
   // Aborts the current search request
@@ -286,21 +262,25 @@ class SearchManager {
 
     const anime = {
       search: query,
-      partial_match: toggles.partial_match
+      partial_match: toggles.partial_match,
+      match_case: toggles.match_case
     };
     const song = {
       search: query,
-      partial_match: toggles.partial_match
+      partial_match: toggles.partial_match,
+      match_case: toggles.match_case
     };
     const artist = {
       search: query,
       partial_match: toggles.partial_match,
+      match_case: toggles.match_case,
       group_granularity: toggles.group_granularity,
       max_other_artist: toggles.max_other_artist
     };
     const composer = {
       search: query,
       partial_match: toggles.partial_match,
+      match_case: toggles.match_case,
       arrangement: toggles.arrangement
     };
 
@@ -334,7 +314,8 @@ class SearchManager {
     if (anime && anime.trim()) {
       result.anime_search_filter = {
         search: anime,
-        partial_match: toggles.partial_match
+        partial_match: toggles.partial_match,
+        match_case: toggles.match_case
       };
     }
 
@@ -342,6 +323,7 @@ class SearchManager {
       result.artist_search_filter = {
         search: artist,
         partial_match: toggles.partial_match,
+        match_case: toggles.match_case,
         group_granularity: toggles.group_granularity,
         max_other_artist: toggles.max_other_artist
       };
@@ -350,7 +332,8 @@ class SearchManager {
     if (song && song.trim()) {
       result.song_name_search_filter = {
         search: song,
-        partial_match: toggles.partial_match
+        partial_match: toggles.partial_match,
+        match_case: toggles.match_case
       };
     }
 
@@ -358,6 +341,7 @@ class SearchManager {
       result.composer_search_filter = {
         search: composer,
         partial_match: toggles.partial_match,
+        match_case: toggles.match_case,
         arrangement: toggles.arrangement
       };
     }
@@ -379,7 +363,13 @@ class SearchManager {
       standard: toggles.standard,
       character: toggles.character,
       chanting: toggles.chanting,
-      instrumental: toggles.instrumental
+      instrumental: toggles.instrumental,
+      tv_filter: toggles.tv_filter,
+      movie_filter: toggles.movie_filter,
+      ova_filter: toggles.ova_filter,
+      ona_filter: toggles.ona_filter,
+      special_filter: toggles.special_filter,
+      doujin_filter: toggles.doujin_filter
     };
   }
 
@@ -419,6 +409,14 @@ class SearchManager {
   buildAmqSongIdsBody(amqSongIds, toggles) {
     return {
       amq_song_ids: amqSongIds,
+      ...this.buildBaseBody(toggles)
+    };
+  }
+
+  // Builds the request body for random song search
+  buildRandomBody(n, toggles) {
+    return {
+      n,
       ...this.buildBaseBody(toggles)
     };
   }
@@ -489,8 +487,11 @@ class SearchManager {
   postJson(url, body) {
     return fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json",
+        "X-Client-Id": CLIENT_NAME
+      },
+      body: JSON.stringify(body || {}),
       signal: this.currentAborter?.signal
     }).then(async resp => {
       // Read response text so we can surface any error details

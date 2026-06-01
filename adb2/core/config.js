@@ -1,3 +1,4 @@
+const CLIENT_NAME = "ADB2";
 const API_BASE = "https://anisongdb.com";
 const SETTINGS_KEY = "adb_settings";
 const PLAYLIST_STORAGE_KEY = "adb_playlists";

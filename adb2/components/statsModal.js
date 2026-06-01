@@ -240,11 +240,11 @@ class StatsModal {
       this.populateSongTypesNumbersInline(this.latestStats);
       $canvas.addClass("d-none");
       this.$songTypesNumbersInline.removeClass("d-none");
-      this.$btnSongTypesToggle.find("i").removeClass("fa-list-ol").addClass("fa-chart-pie");
+      this.$btnSongTypesToggle.find("i").removeClass("fa-list-1-2").addClass("fa-chart-pie");
     } else {
       $canvas.removeClass("d-none");
       this.$songTypesNumbersInline.addClass("d-none");
-      this.$btnSongTypesToggle.find("i").removeClass("fa-chart-pie").addClass("fa-list-ol");
+      this.$btnSongTypesToggle.find("i").removeClass("fa-chart-pie").addClass("fa-list-1-2");
     }
   }
 
@@ -255,11 +255,11 @@ class StatsModal {
       this.populateSongCategoriesNumbersInline(this.latestStats);
       $canvas.addClass("d-none");
       this.$songCategoriesNumbersInline.removeClass("d-none");
-      this.$btnSongCategoriesToggle.find("i").removeClass("fa-list-ol").addClass("fa-chart-pie");
+      this.$btnSongCategoriesToggle.find("i").removeClass("fa-list-1-2").addClass("fa-chart-pie");
     } else {
       $canvas.removeClass("d-none");
       this.$songCategoriesNumbersInline.addClass("d-none");
-      this.$btnSongCategoriesToggle.find("i").removeClass("fa-chart-pie").addClass("fa-list-ol");
+      this.$btnSongCategoriesToggle.find("i").removeClass("fa-chart-pie").addClass("fa-list-1-2");
     }
   }
 
@@ -270,11 +270,11 @@ class StatsModal {
       this.populateBroadcastTypesNumbersInline(this.latestStats);
       $canvas.addClass("d-none");
       this.$broadcastTypesNumbersInline.removeClass("d-none");
-      this.$btnBroadcastTypesToggle.find("i").removeClass("fa-list-ol").addClass("fa-chart-pie");
+      this.$btnBroadcastTypesToggle.find("i").removeClass("fa-list-1-2").addClass("fa-chart-pie");
     } else {
       $canvas.removeClass("d-none");
       this.$broadcastTypesNumbersInline.addClass("d-none");
-      this.$btnBroadcastTypesToggle.find("i").removeClass("fa-chart-pie").addClass("fa-list-ol");
+      this.$btnBroadcastTypesToggle.find("i").removeClass("fa-chart-pie").addClass("fa-list-1-2");
     }
   }
 
@@ -285,11 +285,11 @@ class StatsModal {
       this.populateAnimeTypesNumbersInline(this.latestStats);
       $canvas.addClass("d-none");
       this.$animeTypesNumbersInline.removeClass("d-none");
-      this.$btnAnimeTypesToggle.find("i").removeClass("fa-list-ol").addClass("fa-chart-pie");
+      this.$btnAnimeTypesToggle.find("i").removeClass("fa-list-1-2").addClass("fa-chart-pie");
     } else {
       $canvas.removeClass("d-none");
       this.$animeTypesNumbersInline.addClass("d-none");
-      this.$btnAnimeTypesToggle.find("i").removeClass("fa-chart-pie").addClass("fa-list-ol");
+      this.$btnAnimeTypesToggle.find("i").removeClass("fa-chart-pie").addClass("fa-list-1-2");
     }
   }
 

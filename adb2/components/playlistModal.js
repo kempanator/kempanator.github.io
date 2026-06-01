@@ -91,16 +91,16 @@ class PlaylistModal {
                         <i class="fa-solid fa-table me-1"></i>Load
                       </button>
                       <button class="btn btn-outline-info btn-rename-playlist" data-playlist-id="${id}" title="Rename playlist">
-                        <i class="fa-solid fa-edit me-1"></i>Rename
+                        <i class="fa-solid fa-pen-to-square me-1"></i>Rename
                       </button>
                       <button class="btn btn-outline-success btn-replace-playlist" data-playlist-id="${id}" title="Replace playlist with current table contents">
                         <i class="fa-solid fa-arrow-right-arrow-left me-1"></i>Replace
                       </button>
                       <button class="btn btn-outline-secondary btn-export-playlist" data-playlist-id="${id}" title="Export this playlist as JSON">
-                        <i class="fa-solid fa-file-export me-1"></i>Export
+                        <i class="fa-solid fa-arrow-right-from-file me-1"></i>Export
                       </button>
                       <button class="btn btn-outline-warning btn-auto-add-playlist ${playlistManager.autoAddPlaylistId === id ? "active" : ""}" data-playlist-id="${id}" title="Auto add song to this playlist when action is clicked">
-                        <i class="fa-solid fa-magic me-1"></i>Auto Add
+                        <i class="fa-solid fa-wand-magic me-1"></i>Auto Add
                       </button>
                       <button class="btn btn-outline-danger btn-delete-playlist" data-playlist-id="${id}" title="Delete playlist">
                         <i class="fa-solid fa-trash me-1"></i>Delete

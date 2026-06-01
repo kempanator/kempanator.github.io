@@ -57,7 +57,14 @@ class InfoModal {
         standard: true,
         character: true,
         chanting: true,
-        instrumental: true
+        instrumental: true,
+        // Anime type filters
+        tv_filter: true,
+        movie_filter: true,
+        ova_filter: true,
+        ona_filter: true,
+        special_filter: true,
+        doujin_filter: true
       };
 
       this.$modal.modal("hide");
@@ -239,7 +246,7 @@ class InfoModal {
           .attr("target", "_blank")
           .attr("rel", "noreferrer")
           .addClass("ms-2")
-          .append($("<i>").addClass("fa-solid fa-external-link"))
+          .append($("<i>").addClass("fa-solid fa-arrow-up-right-from-square"))
       );
     }
     $row.append($titleCell);

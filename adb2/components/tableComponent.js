@@ -390,7 +390,7 @@ class TableComponent {
 
       let icon = `<i class="fa-solid fa-sort text-muted sort-ind"></i>`;
       if (column === col) {
-        icon = dir === "asc" ? `<i class="fa-solid fa-sort-up sort-ind"></i>` : `<i class="fa-solid fa-sort-down sort-ind"></i>`;
+        icon = dir === "asc" ? `<i class="fa-solid fa-sort-asc sort-ind"></i>` : `<i class="fa-solid fa-sort-desc sort-ind"></i>`;
       }
       th.append(icon);
     });
