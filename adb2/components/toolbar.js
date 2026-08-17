@@ -45,7 +45,10 @@ class Toolbar {
     this.$chkOVA = $("#chkOVA");
     this.$chkONA = $("#chkONA");
     this.$chkSpecial = $("#chkSpecial");
-    this.$chkDoujin = $("#chkDoujin");
+    this.$chkOther = $("#chkOther");
+    this.$inpSeasonStart = $("#inpSeasonStart");
+    this.$inpSeasonEnd = $("#inpSeasonEnd");
+    this.$inpDifficulty = $("#inpDifficulty");
     // Table Operations
     this.$btnShuffle = $("#btnShuffle");
     this.$btnReverse = $("#btnReverse");
@@ -75,6 +78,9 @@ class Toolbar {
     this.$searchArtist.on("keydown", e => { if (e.key === "Enter") eventBus.emit("search:submit"); });
     this.$searchSong.on("keydown", e => { if (e.key === "Enter") eventBus.emit("search:submit"); });
     this.$searchComposer.on("keydown", e => { if (e.key === "Enter") eventBus.emit("search:submit"); });
+    $("#advancedPane").on("keydown", "input[type='text'], input[type='number']", e => {
+      if (e.key === "Enter") eventBus.emit("search:submit");
+    });
     this.$searchScope.on("change", () => this.updateScopePlaceholder());
     this.$cfField.on("change", () => this.updateClientFilterUI());
     this.updateScopePlaceholder();
@@ -167,7 +173,10 @@ class Toolbar {
       ova_filter: this.$chkOVA.is(":checked"),
       ona_filter: this.$chkONA.is(":checked"),
       special_filter: this.$chkSpecial.is(":checked"),
-      doujin_filter: this.$chkDoujin.is(":checked")
+      other_filter: this.$chkOther.is(":checked"),
+      season_start: String(this.$inpSeasonStart.val() || "").trim(),
+      season_end: String(this.$inpSeasonEnd.val() || "").trim(),
+      difficulty: String(this.$inpDifficulty.val() || "").trim()
     };
   }
 

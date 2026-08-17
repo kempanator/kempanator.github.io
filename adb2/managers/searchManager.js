@@ -34,12 +34,16 @@ class SearchManager {
         "ignore_duplicate", "normal_broadcast", "dub", "rebroadcast",
         "standard", "character", "chanting", "instrumental",
         "tv_filter", "movie_filter", "ova_filter", "ona_filter",
-        "special_filter", "doujin_filter"
+        "special_filter", "other_filter", "season_start", "season_end",
+        "difficulty"
       ];
       // Respect result mode in payload if present
       const isAppend = payload.result_mode === "append";
       if (!isAppend) this.newTableResetState();
       const authoritativeToggles = this.pickKeys(payload, toggleKeys);
+      if (!this.normalizeSeasonRangeToggles(authoritativeToggles)) return;
+      if (!this.normalizeDifficultyToggles(authoritativeToggles)) return;
+      if (!this.validateSongFilters(authoritativeToggles)) return;
 
       if (payload.scope && payload.query) {
         const authoritativeInputs = this.pickKeys(payload, ["scope", "query"]);
@@ -62,6 +66,9 @@ class SearchManager {
     if (!isAppend) this.newTableResetState();
     const baseInputs = toolbar.getSearchInputs();
     const baseToggles = toolbar.getToggleStates();
+    if (!this.normalizeSeasonRangeToggles(baseToggles)) return;
+    if (!this.normalizeDifficultyToggles(baseToggles)) return;
+    if (!this.validateSongFilters(baseToggles)) return;
     if (isAdvanced) {
       this.performAdvancedSearch(isAppend, baseToggles, baseInputs);
     } else {
@@ -281,7 +288,9 @@ class SearchManager {
       search: query,
       partial_match: toggles.partial_match,
       match_case: toggles.match_case,
-      arrangement: toggles.arrangement
+      arrangement: toggles.arrangement,
+      group_granularity: toggles.group_granularity,
+      max_other_artist: toggles.max_other_artist
     };
 
     switch (scope) {
@@ -342,35 +351,183 @@ class SearchManager {
         search: composer,
         partial_match: toggles.partial_match,
         match_case: toggles.match_case,
-        arrangement: toggles.arrangement
+        arrangement: toggles.arrangement,
+        group_granularity: toggles.group_granularity,
+        max_other_artist: toggles.max_other_artist
       };
     }
 
     return result;
   }
 
-  // Builds the base body with common toggle settings
+  // Builds the base body with common toggle settings (new nested filters contract)
   buildBaseBody(toggles) {
+    const filters = {
+      song_types: this.buildSongTypes(toggles),
+      broadcasts: this.buildBroadcasts(toggles),
+      song_categories: this.buildSongCategories(toggles),
+      anime_types: this.buildAnimeTypes(toggles)
+    };
+
+    // Nested season range (API: filters.season)
+    if (toggles.season_start || toggles.season_end) {
+      filters.season = {};
+      if (toggles.season_start) filters.season.start = toggles.season_start;
+      if (toggles.season_end) filters.season.end = toggles.season_end;
+    }
+
+    // Nested difficulty range (API: filters.difficulty)
+    const hasDifficultyStart = toggles.difficulty_start != null;
+    const hasDifficultyEnd = toggles.difficulty_end != null;
+    if (hasDifficultyStart || hasDifficultyEnd || toggles.include_no_difficulty) {
+      filters.difficulty = {};
+      if (hasDifficultyStart) filters.difficulty.start = toggles.difficulty_start;
+      if (hasDifficultyEnd) filters.difficulty.end = toggles.difficulty_end;
+      if (toggles.include_no_difficulty) filters.difficulty.include_no_difficulty = true;
+    }
+
     return {
       and_logic: toggles.and_logic,
       ignore_duplicate: toggles.ignore_duplicate,
-      opening_filter: toggles.opening_filter,
-      ending_filter: toggles.ending_filter,
-      insert_filter: toggles.insert_filter,
-      normal_broadcast: toggles.normal_broadcast,
-      dub: toggles.dub,
-      rebroadcast: toggles.rebroadcast,
-      standard: toggles.standard,
-      character: toggles.character,
-      chanting: toggles.chanting,
-      instrumental: toggles.instrumental,
-      tv_filter: toggles.tv_filter,
-      movie_filter: toggles.movie_filter,
-      ova_filter: toggles.ova_filter,
-      ona_filter: toggles.ona_filter,
-      special_filter: toggles.special_filter,
-      doujin_filter: toggles.doujin_filter
+      filters
     };
+  }
+
+  // Map OP/ED/IN toggles to API song_types
+  buildSongTypes(toggles) {
+    const songTypes = [];
+    if (toggles.opening_filter) songTypes.push("opening");
+    if (toggles.ending_filter) songTypes.push("ending");
+    if (toggles.insert_filter) songTypes.push("insert");
+    return songTypes;
+  }
+
+  // Map broadcast toggles to API broadcasts
+  buildBroadcasts(toggles) {
+    const broadcasts = [];
+    if (toggles.normal_broadcast) broadcasts.push("normal");
+    if (toggles.dub) broadcasts.push("dub");
+    if (toggles.rebroadcast) broadcasts.push("rebroadcast");
+    return broadcasts;
+  }
+
+  // Map category toggles to API song_categories
+  // Standard also includes "other" (No Category / uncategorized), matching AnisongDB UI
+  buildSongCategories(toggles) {
+    const categories = [];
+    if (toggles.standard) {
+      categories.push("standard", "other");
+    }
+    if (toggles.character) categories.push("character");
+    if (toggles.chanting) categories.push("chanting");
+    if (toggles.instrumental) categories.push("instrumental");
+    return categories;
+  }
+
+  // Map anime type toggles to API anime_types
+  buildAnimeTypes(toggles) {
+    const animeTypes = [];
+    if (toggles.tv_filter) animeTypes.push("tv");
+    if (toggles.movie_filter) animeTypes.push("movie");
+    if (toggles.ova_filter) animeTypes.push("ova");
+    if (toggles.ona_filter) animeTypes.push("ona");
+    if (toggles.special_filter) animeTypes.push("special");
+    if (toggles.other_filter) animeTypes.push("other");
+    return animeTypes;
+  }
+
+  // API requires at least one value in each filter list
+  validateSongFilters(toggles) {
+    if (!toggles) return true;
+    if (this.buildSongTypes(toggles).length === 0) {
+      showAlert("At least one song type filter (OP, ED, IN) must be enabled.", "warning");
+      return false;
+    }
+    if (this.buildBroadcasts(toggles).length === 0) {
+      showAlert("At least one broadcast filter (Normal, Dub, Rebroadcast) must be enabled.", "warning");
+      return false;
+    }
+    if (this.buildSongCategories(toggles).length === 0) {
+      showAlert("At least one category filter (Standard, Character, Chanting, Instrumental) must be enabled.", "warning");
+      return false;
+    }
+    if (this.buildAnimeTypes(toggles).length === 0) {
+      showAlert("At least one anime type filter must be enabled.", "warning");
+      return false;
+    }
+    return true;
+  }
+
+  // Normalize season_start / season_end on toggles; blank stays omitted, invalid aborts
+  normalizeSeasonRangeToggles(toggles) {
+    if (!toggles) return true;
+
+    for (const [key, label] of [
+      ["season_start", "start"],
+      ["season_end", "end"]
+    ]) {
+      const raw = String(toggles[key] || "").trim();
+      if (!raw) {
+        delete toggles[key];
+        continue;
+      }
+      const parsed = this.parseSeason(raw);
+      if (!parsed) {
+        showAlert(`Invalid season ${label}. Use e.g. 'Spring 2024'.`, "warning");
+        return false;
+      }
+      toggles[key] = parsed;
+    }
+
+    return true;
+  }
+
+  // Normalize difficulty on toggles; blank stays omitted, invalid aborts
+  // Accepts a single number (start=end), a range like "60-100", or 0/none/null for no-difficulty songs
+  normalizeDifficultyToggles(toggles) {
+    if (!toggles) return true;
+
+    delete toggles.difficulty_start;
+    delete toggles.difficulty_end;
+    delete toggles.include_no_difficulty;
+
+    const raw = String(toggles.difficulty ?? "").trim();
+    delete toggles.difficulty;
+    if (!raw) return true;
+
+    if (/^(0|none|null)$/i.test(raw)) {
+      toggles.include_no_difficulty = true;
+      return true;
+    }
+
+    const range = this.parseDifficultyRange(raw);
+    if (!range) {
+      showAlert("Invalid difficulty. Use a number or range from 0 to 100 (e.g. 60 or 60-100), or none.", "warning");
+      return false;
+    }
+
+    toggles.difficulty_start = range.start;
+    toggles.difficulty_end = range.end;
+    return true;
+  }
+
+  // Parse "60", "60-100", or "60 - 100" into inclusive start/end bounds
+  parseDifficultyRange(input) {
+    const s = String(input || "").trim();
+    const rangeMatch = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/.exec(s);
+    if (rangeMatch) {
+      const a = Number(rangeMatch[1]);
+      const b = Number(rangeMatch[2]);
+      if (!Number.isFinite(a) || !Number.isFinite(b) || a < 0 || a > 100 || b < 0 || b > 100) {
+        return null;
+      }
+      return { start: Math.min(a, b), end: Math.max(a, b) };
+    }
+
+    if (!/^\d+(?:\.\d+)?$/.test(s)) return null;
+    const value = Number(s);
+    if (!Number.isFinite(value) || value < 0 || value > 100) return null;
+    return { start: value, end: value };
   }
 
   // Builds the request body for ANN ID search
@@ -478,9 +635,10 @@ class SearchManager {
 
   // Parses season query string to extract year and season information
   parseSeason(query) {
-    const match = /^(Winter|Spring|Summer|Fall)\s+(\d{4})$/i.exec(query.trim());
+    const match = /^(winter|spring|summer|fall)\s+(\d{4})$/i.exec(String(query || "").trim());
     if (!match) return null;
-    return match[1] + " " + match[2];
+    const season = match[1][0].toUpperCase() + match[1].slice(1).toLowerCase();
+    return `${season} ${match[2]}`;
   }
 
   // Makes a POST request with JSON body and returns parsed response
@@ -504,7 +662,7 @@ class SearchManager {
       }
 
       if (!resp.ok) {
-        const message = (data && (data.detail || data.message)) || `HTTP ${resp.status}`;
+        const message = this.formatApiErrorDetail(data) || `HTTP ${resp.status}`;
         const err = new Error(message);
         err.status = resp.status;
         err.response = data;
@@ -515,11 +673,33 @@ class SearchManager {
     });
   }
 
+  // Format FastAPI / pydantic error detail into a readable string
+  formatApiErrorDetail(data) {
+    if (!data) return null;
+    const detail = data.detail ?? data.message;
+    if (detail == null) return null;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+      return detail.map(item => {
+        if (typeof item === "string") return item;
+        const loc = Array.isArray(item?.loc) ? item.loc.filter(p => p !== "body").join(".") : "";
+        const msg = item?.msg || JSON.stringify(item);
+        return loc ? `${loc}: ${msg}` : msg;
+      }).join("; ");
+    }
+    if (typeof detail === "object") {
+      try { return JSON.stringify(detail); } catch (e) { return String(detail); }
+    }
+    return String(detail);
+  }
+
   // Handles fetch errors and displays appropriate error messages
   onFetchError(err) {
     if (err?.name === "AbortError") return;
     // Prefer API-provided detail or message, fall back to error message
-    const detail = err?.response?.detail ?? err?.response?.message ?? err?.detail ?? err?.message ?? String(err);
+    const detail = this.formatApiErrorDetail(err?.response)
+      ?? err?.message
+      ?? String(err);
     console.error("Fetch error:", err);
     showAlert(`Request failed: ${detail}`, "danger");
   }

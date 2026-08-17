@@ -64,7 +64,7 @@ class InfoModal {
         ova_filter: true,
         ona_filter: true,
         special_filter: true,
-        doujin_filter: true
+        other_filter: true
       };
 
       this.$modal.modal("hide");
@@ -331,7 +331,7 @@ class InfoModal {
     const $col2 = $("<div>").addClass("col-md-6");
     $col2.append($("<div>").html(`<span class="fw-semibold">Anime Type:</span> ${escapeHtml(animeType)}`));
     $col2.append($("<div>").html(`<span class="fw-semibold">Anime Category:</span> ${escapeHtml(animeCategory)}`));
-    $col2.append($("<div>").html(`<span class="fw-semibold">Song Category:</span> ${escapeHtml(songCategory)}`));
+    $col2.append($("<div>").html(`<span class="fw-semibold">Performance:</span> ${escapeHtml(songCategory)}`));
     $col2.append($("<div>").html(`<span class="fw-semibold">Broadcast:</span> ${escapeHtml(broadcast)}`));
     $row1.append($col2);
     $root.append($row1);
